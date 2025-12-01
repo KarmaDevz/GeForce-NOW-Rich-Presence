@@ -1,3 +1,7 @@
+<p align="center"> GeForce NOW Rich Presence para Discord:Muestra automáticamente tu juego real de GeForce NOW en tu Discord Rich PresenceDetecta tus juegos de GeForce NOW en Discord, perfecto para Discord Quests, usuarios de GFN y streamers que desean que su estado se actualice de forma atractiva en tiempo real. </p>
+
+[🇬🇧 Read in English](./README.md)
+
 <h1 align="center">🎮 Presencia Enriquecida de GeForce NOW para Discord</h1>
 
 <p align="center">
