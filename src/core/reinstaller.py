@@ -6,8 +6,11 @@ import subprocess
 import tempfile
 import logging
 import shutil
+import platform
 from pathlib import Path
 from PyQt5.QtCore import QThread, pyqtSignal
+
+IS_WINDOWS = platform.system() == "Windows"
 
 class GFNReinstallerWorker(QThread):
     started_reinstall = pyqtSignal()
@@ -20,6 +23,10 @@ class GFNReinstallerWorker(QThread):
 
     def run(self):
         logger = logging.getLogger('geforce_presence')
+        if not IS_WINDOWS:
+            logger.info("GFN repair skipped (Windows only feature).")
+            self.error_occurred.emit("repair_windows_only")
+            return
         try:
             self.started_reinstall.emit()
             self.progress_update.emit(0)

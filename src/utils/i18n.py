@@ -1,8 +1,16 @@
 import json
 import os
 import sys
-import winreg
+try:
+    import winreg
+except ImportError:
+    winreg = None
+import subprocess
 from pathlib import Path
+
+IS_WINDOWS = sys.platform.startswith("win")
+IS_LINUX = sys.platform.startswith("linux")
+IS_MACOS = sys.platform.startswith("darwin")
 
 def resource_path(relative_path):
     """Get absolute path to resource, works for dev and for PyInstaller"""
@@ -17,19 +25,47 @@ def resource_path(relative_path):
 LANG_DIR = Path(resource_path("lang"))
 
 def get_lang_from_registry(default="en"):
-    try:
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\GeForcePresence")
-        lang, _ = winreg.QueryValueEx(key, "lang")
-        winreg.CloseKey(key)
-
-        if "spanish" in lang.lower():
-            return "es"
-        elif "english" in lang.lower():
-            return "en"
-        else:
+    if IS_WINDOWS:
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\GeForcePresence")
+            lang, _ = winreg.QueryValueEx(key, "lang")
+            winreg.CloseKey(key)
+            return _normalize_lang(lang, default)
+        except Exception:
             return default
-    except Exception:
-        return default
+    elif IS_MACOS:
+        try:
+            # Try reading from macOS defaults
+            # defaults read com.nvidia.geforcenow lang
+            # Note: This assumes the app stores it there, or we check system lang
+            result = subprocess.run(
+                ["defaults", "read", "com.nvidia.geforcenow", "lang"],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                return _normalize_lang(result.stdout.strip(), default)
+        except Exception:
+            pass
+        
+        # Fallback to system locale
+        lang = os.getenv("LANG", default)
+        return _normalize_lang(lang, default)
+    
+    elif IS_LINUX:
+        lang = os.getenv("LANG", default)
+        if "." in lang:
+            lang = lang.split(".")[0]
+        return _normalize_lang(lang, default)
+
+    return default
+
+def _normalize_lang(lang_str: str, default: str) -> str:
+    lang_str = lang_str.lower()
+    if "spanish" in lang_str or "es" in lang_str:
+        return "es"
+    elif "english" in lang_str or "en" in lang_str:
+        return "en"
+    return default
 
 def load_locale(lang: str = "en") -> dict:
     path = LANG_DIR / f"{lang}.json"

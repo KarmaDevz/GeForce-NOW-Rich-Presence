@@ -12606,7 +12606,7 @@
     },
     "ULTRAKILL": {
         "name": "ULTRAKILL",
-        "steam_appid": null,
+        "steam_appid": "1229490",
         "client_id": "1124351854831222945",
         "executable_path": "ultrakill/ultrakill.exe",
         "cmsId": "100794511",

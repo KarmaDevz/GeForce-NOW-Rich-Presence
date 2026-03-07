@@ -4,6 +4,8 @@ import subprocess
 import logging
 import json
 import time
+import shutil
+import sys
 from pathlib import Path
 from typing import Optional
 from src.core.utils import get_lang_from_registry, load_locale
@@ -20,13 +22,17 @@ logger = logging.getLogger('geforce_presence')
 class AppLauncher:
     @staticmethod
     def find_geforce_now() -> Optional[str]:
-        possible = [
-            Path(os.getenv("LOCALAPPDATA", "")) / "NVIDIA Corporation" / "GeForceNOW" / "CEF" / "GeForceNOW.exe"
-        ]
-        for p in possible:
-            if p.exists():
-                return str(p)
-            
+        if sys.platform == "win32":
+            possible = [
+                Path(os.getenv("LOCALAPPDATA", "")) / "NVIDIA Corporation" / "GeForceNOW" / "CEF" / "GeForceNOW.exe"
+            ]
+            for p in possible:
+                if p.exists():
+                    return str(p)
+        else:
+            if shutil.which("flatpak"):
+                return "flatpak run com.nvidia.geforcenow"
+        
         return None
 
     @staticmethod
@@ -105,12 +111,16 @@ class AppLauncher:
         except Exception as e:
             logger.error(f"Error inesperado al procesar JSON: {e}")
             return False, False
+        
+        if sys.platform != "win32":
+	        return False, False    
 
     @staticmethod
     def launch_geforce_now() -> bool:
         success, modified = AppLauncher.disable_native_rich_presence()
         
-        is_running = AppLauncher._is_process_running_by_name("GeForceNOW.exe")
+        proc_name = "GeForceNOW.exe" if sys.platform == "win32" else "GeForceNOW"
+        is_running = AppLauncher._is_process_running_by_name(proc_name)
         
         if is_running:
             if modified:
@@ -124,7 +134,12 @@ class AppLauncher:
         path = AppLauncher.find_geforce_now()
         if path:
             logger.info(TEXTS.get("launching", "🚀 Launching GeForce NOW..."))
-            subprocess.Popen([path])
+            
+            if sys.platform == "win32":
+                subprocess.Popen([path])
+            else:
+                subprocess.Popen(["flatpak", "run", "com.nvidia.geforcenow"])
+    
             return True
         else:
             logger.error(TEXTS.get("geforce_not_found", "GeForce NOW not found in the default installation path."))
@@ -132,9 +147,12 @@ class AppLauncher:
 
     @staticmethod
     def find_discord() -> Optional[str]:
-        p = Path(os.getenv("LOCALAPPDATA", "")) / "Discord" / "Update.exe"
+        if sys.platform == "win32":
+            p = Path(os.getenv("LOCALAPPDATA", "")) / "Discord" / "Update.exe"
         if p.exists():
             return str(p)
+        else:
+            return shutil.which("discord")
         return None
 
     @staticmethod
@@ -147,6 +165,10 @@ class AppLauncher:
         updater = AppLauncher.find_discord()
         if updater:
             logger.info(TEXTS.get("launching_discord", "🚀 Iniciando Discord..."))
-            subprocess.Popen([updater, "--processStart", "Discord.exe"])
+            
+            if sys.platform == "win32":
+                subprocess.Popen([updater, "--processStart", "Discord.exe"])
+            else:
+                subprocess.Popen([updater])
         else:
             logger.warning("⚠️ No se encontró Discord instalado en la ruta por defecto.")
