@@ -1,4 +1,4 @@
-# NOTE: I will NOT be updating this, this is f)r the OG dev to update the main repo (if they so choose to)
+# NOTE: I will NOT be updating this, this is for the OG dev to update the main repo (if they so choose to)
 
 <div align="center">
   <img src="assets/asset1.jpg" alt="GeForce NOW Rich Presence Banner" width="100%" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);" />
