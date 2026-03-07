@@ -13,6 +13,7 @@ pyinstaller --clean --noconfirm \
     --add-data "tools:tools" \
     src/GeForceNOWRichPresence.py
 ```
+make sure the binary is executable `chmod +x`
 
 # BUILDING THE APPIMAGE    
 make the appdir structure for making the appimage
@@ -20,9 +21,10 @@ make the appdir structure for making the appimage
 AppDir/
 ├── GeForceNOWRichPresence.desktop # makes a shortcut
 ├── gfn.png # the icon for the app
+├── AppRun
 └── usr
     ├── bin
-    │   └── GeForceNOWRichPresence # the executable itself
+    │   └── GeForceNOWRichPresence # the executable itself, make sure its executable
     └── share
         └── geforce_presence # name the folder whatever
             ├── assets # include ALL relevant files for these
@@ -40,5 +42,11 @@ Exec=GeForceNOWRichPresence
 Icon=gfn
 Terminal=false
 Categories=Utility;
+```
+make AppRun and make it executable too
+```
+#!/bin/bash
+HERE="$(dirname "$(readlink -f "${0}")")"
+exec "$HERE/usr/bin/GeForceNOWRichPresence" "$@"
 ```
 and build it with `appimagetool AppDir`
