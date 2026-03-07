@@ -1,6 +1,7 @@
 # BUILDING THE EXECUTABLE
 
 make sure to install the deps (updated ones) `pip install -r requirements.txt`
+
 build the binary with pyinstaller, an example of what i did
 ```
 pyinstaller --clean --noconfirm \
