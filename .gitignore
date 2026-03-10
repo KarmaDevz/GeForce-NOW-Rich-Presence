@@ -15,3 +15,5 @@ instalador.iss
 mejoras_pendientes.txt
 innosetup.txt
 compile.txt
+AppDir 
+*.AppImage

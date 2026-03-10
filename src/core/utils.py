@@ -83,6 +83,8 @@ def get_lang_from_registry(default="en"):
     
     elif IS_LINUX:
         lang = os.getenv("LANG", default)
+        if "." in lang:
+            lang = lang.split(".")[0]
         return _normalize_lang(lang, default)
 
     return default
@@ -96,8 +98,6 @@ def _normalize_lang(lang_str: str, default: str) -> str:
     return default
 
 def set_autostart_windows(enable: bool):
-    if not IS_WINDOWS:
-        return
         
     try:
         import winshell
@@ -148,6 +148,27 @@ def set_autostart_windows(enable: bool):
             logger.info("✅ Acceso directo eliminado de shell:startup.")
     except Exception as e:
         logger.error(f"Error modificando inicio de Windows (winshell): {e}")
+
+def set_autostart_linux(enable: bool):
+    autostart_dir = Path.home() / ".config" / "autostart"
+    autostart_dir.mkdir(parents=True, exist_ok=True)
+    desktop_file = autostart_dir / "geforce_presence.desktop"
+
+    if enable:
+        content = f"""[Desktop Entry]
+Type=Application
+Exec=python3 {os.path.abspath(__file__)}
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=GeForce NOW Presence
+Comment=Launch GeForce NOW Presence at login
+Terminal=false
+"""
+        desktop_file.write_text(content)
+    else:
+        if desktop_file.exists():
+            desktop_file.unlink()
 
 def load_locale(lang: str = "en") -> dict:
     path = LANG_DIR / f"{lang}.json"

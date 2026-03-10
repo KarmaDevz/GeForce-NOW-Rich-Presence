@@ -1108,34 +1108,20 @@ class PresenceManager(QObject):
                     title = result.stdout.strip()
 
             elif IS_LINUX:
-                # Linux logic using xprop (assumes X11 for now)
-                # We could also try /proc, but window title usually needs X11/Wayland tools
                 try:
-                    # Check if xprop is available
-                    # We are looking for a window with property _NET_WM_NAME or WM_NAME
-                    # and class name (WM_CLASS) related to GeForceNOW (if it exists)
-                    # For now, let's try a generic approach if the user is running it via browser/electron
-                    
-                    # Alternative: use standard 'w' tool or similar if available, but xprop is standard-ish for X11
-                    
-                    # We will try to find a window with "GeForce NOW" in title
-                    # cmd: xprop -root _NET_ACTIVE_WINDOW
-                    # then get title
-                    
-                    # Simple approach: Check all windows (requires tools)
-                    # Better: rely on process name first?
-                    # GFN on linux is likely Chrome/Edge.
-                    
-                    # NOTE: Since GFN is web-based on Linux usually, detection might be tricky without a dedicated app.
-                    # If this is for a dedicated Electron wrapper, we assume process name matches.
-                    
-                    pass 
+                    result = subprocess.run(
+                        ["wmctrl", "-l"],
+                        capture_output=True,
+                        text=True
+                    )
+
+                    if result.returncode == 0:
+                        for line in result.stdout.splitlines():
+                            if "GeForce NOW" in line:
+                                title = line.split(None, 3)[-1]
+                                break
                 except Exception:
                     pass
-                
-                # Placeholder for Linux title detection
-                # If running via Browser, title might be "GeForce NOW - Google Chrome"
-                pass
             
             if not title:
                 self.log_once("⚠️ GeForce NOW no está abierto (o sin ventana activa)")

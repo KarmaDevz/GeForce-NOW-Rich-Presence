@@ -4,6 +4,7 @@ import logging
 import requests
 import subprocess
 import tempfile
+import platform
 from pathlib import Path
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QLabel, QPushButton, QProgressBar, QMessageBox, QHBoxLayout,
@@ -15,6 +16,7 @@ from src.version import VERSION
 from src.utils.i18n import t
 from src.core.utils import ASSETS_DIR
 from PyQt5.QtGui import QIcon
+IS_WINDOWS = platform.system() == "Windows"
 
 # Common Stylesheet to match the rest of the app (Copied from dialogs.py to avoid circular imports)
 GAMING_STYLESHEET = """
@@ -167,7 +169,10 @@ class UpdateWorker(QThread):
                 # Find .exe asset
                 exe_url = None
                 for asset in data.get("assets", []):
-                    if asset["name"].endswith(".exe"):
+                    if IS_WINDOWS and asset["name"].endswith(".exe"):
+                        exe_url = asset["browser_download_url"]
+                        break
+                    elif not IS_WINDOWS and asset["name"].endswith((".AppImage", ".tar.gz", ".zip")):
                         exe_url = asset["browser_download_url"]
                         break
                 
@@ -194,7 +199,10 @@ class UpdateWorker(QThread):
             
             tmp_dir = Path(tempfile.gettempdir()) / "geforce_update"
             tmp_dir.mkdir(parents=True, exist_ok=True)
-            installer_path = tmp_dir / "installer.exe"
+            if IS_WINDOWS:
+                installer_path = tmp_dir / "installer.exe"
+            else:
+                installer_path = tmp_dir / "installer"
 
             with open(installer_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
@@ -281,7 +289,11 @@ class UpdateDialog(QDialog):
         try:
             logger.info(f"Launching installer: {installer_path}")
             # Launch installer and exit
-            subprocess.Popen([installer_path], shell=True)
+            if IS_WINDOWS:
+                subprocess.Popen([installer_path], shell=True)
+            else:
+                subprocess.Popen(["chmod", "+x", str(installer_path)])
+                subprocess.Popen([str(installer_path)])
             sys.exit(0)
         except Exception as e:
             self.on_error(f"Failed to launch installer: {e}")

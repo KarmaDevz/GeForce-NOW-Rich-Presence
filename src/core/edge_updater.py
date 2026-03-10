@@ -28,8 +28,8 @@ class EdgeDriverUpdater:
     """
 
     OFFICIAL_TOOLS_URL = "https://developer.microsoft.com/en-us/microsoft-edge/tools/webdriver/?form=MA13LH#downloads"
-    DOWNLOAD_URL_TEMPLATE = "https://msedgedriver.microsoft.com/{version}/edgedriver_win64.zip"
-
+    DOWNLOAD_URL_TEMPLATE_WIN = "https://msedgedriver.microsoft.com/{version}/edgedriver_win64.zip"
+    DOWNLOAD_URL_TEMPLATE_LINUX = "https://msedgedriver.microsoft.com/{version}/edgedriver_linux64.zip"
     def __init__(self, parent_widget=None):
         self.parent_widget = parent_widget
 
@@ -38,7 +38,8 @@ class EdgeDriverUpdater:
         Orchestrates the update process.
         """
         if not IS_WINDOWS:
-            logger.info("Skipping Edge Driver Update (Windows Only)")
+            logger.info("Linux detected. Skipping registry check and downloading latest EdgeDriver.")
+            self.download_latest_version()
             return
 
         logger.info("Starting Edge Driver Check...")
@@ -100,7 +101,10 @@ class EdgeDriverUpdater:
         """
         Downloads https://msedgedriver.microsoft.com/<VERSION>/edgedriver_win64.zip
         """
-        url = self.DOWNLOAD_URL_TEMPLATE.format(version=version)
+        if IS_WINDOWS:
+            url = self.DOWNLOAD_URL_TEMPLATE_WIN.format(version=version)
+        else:
+            url = self.DOWNLOAD_URL_TEMPLATE_LINUX.format(version=version)
         return self._download_and_extract(url)
 
     def download_latest_version(self):
@@ -160,13 +164,14 @@ class EdgeDriverUpdater:
             r.raise_for_status()
 
             # Save zip to temp
-            tmp_zip = Path(os.environ["TEMP"]) / "edgedriver_temp.zip"
+            temp_dir = Path(os.environ.get("TEMP", "/tmp"))
+            tmp_zip = temp_dir / "edgedriver_temp.zip"
             with open(tmp_zip, 'wb') as f:
                 for chunk in r.iter_content(chunk_size=8192):
                     f.write(chunk)
 
             # Extract
-            extract_dir = Path(os.environ["TEMP"]) / "edgedriver_extract"
+            extract_dir = temp_dir / "edgedriver_extract"
             if extract_dir.exists():
                 shutil.rmtree(extract_dir)
             extract_dir.mkdir()
@@ -177,8 +182,11 @@ class EdgeDriverUpdater:
             # Locate msedgedriver.exe (it might be in a subfolder)
             driver_src = None
             for root, dirs, files in os.walk(extract_dir):
-                if "msedgedriver.exe" in files:
+                if IS_WINDOWS and "msedgedriver.exe" in files:
                     driver_src = Path(root) / "msedgedriver.exe"
+                    break
+                elif not IS_WINDOWS and "msedgedriver" in files:
+                    driver_src = Path(root) / "msedgedriver"
                     break
             
             if driver_src and driver_src.exists():
@@ -186,6 +194,8 @@ class EdgeDriverUpdater:
                 target_dir.mkdir(parents=True, exist_ok=True)
                 
                 target_path = DRIVER_PATH
+                if not IS_WINDOWS:
+                    target_path = target_path.with_name("msedgedriver_linux")
                 
                 # Check locked
                 if target_path.exists():
@@ -204,6 +214,7 @@ class EdgeDriverUpdater:
                             return False
 
                 shutil.move(str(driver_src), str(target_path))
+                os.chmod(target_path, 0o755)
                 logger.info(f"Driver installed to {target_path}")
                 return True
             else:

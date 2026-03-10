@@ -72,10 +72,9 @@ def main():
     # 3. Load Locale
     try:
         lang = get_lang_from_registry()
-        texts = load_locale(lang)
     except Exception:
         lang = os.getenv('GEFORCE_LANG', 'en')
-        texts = load_locale(lang)
+    texts = load_locale(lang)
 
     # 4. Initialize PyQt Application
     app = QApplication(sys.argv)
@@ -88,7 +87,7 @@ def main():
     # 6. Initialize Managers First (moved up so we can read settings)
     config_manager = ConfigManager(CONFIG_DIR / "config_path.txt")
 
-    if config_manager.get_setting("start_with_windows", False):
+    if sys.platform == "win32" and config_manager.get_setting("start_with_windows", False):
         try:
             import winshell
             app_name = "GeForceNOWRichPresence"

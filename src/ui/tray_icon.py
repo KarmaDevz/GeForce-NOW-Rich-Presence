@@ -1,11 +1,13 @@
 import logging
 import threading
 import time
+import subprocess
+import sys
 from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QAction, QApplication, QMessageBox, QProgressDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog
-from src.core.utils import ASSETS_DIR, LOG_FILE, set_autostart_windows
+from src.core.utils import ASSETS_DIR, LOG_FILE, set_autostart_windows, set_autostart_linux
 from src.core.app_launcher import AppLauncher
 from src.ui.dialogs import AskGameDialog, MatchSelectionDialog, GamingMessageBox, GamingInputDialog, QuestListDialog, CustomPresenceDialog, AboutDialog, GFNRepairDialog, GAMING_STYLESHEET
 from src.core.utils import get_lang_from_registry, load_locale
@@ -177,7 +179,11 @@ class SystemTrayIcon(QSystemTrayIcon):
 
     def toggle_start_windows(self, checked):
         self.config_manager.set_setting("start_with_windows", checked)
-        set_autostart_windows(checked)
+        self.config_manager.set_setting("start_with_windows", checked)
+        if sys.platform.startswith("win"):
+            set_autostart_windows(checked)
+        elif sys.platform.startswith("linux"):
+            set_autostart_linux(checked)
 
     def toggle_force_game(self):
         # 0. Check for running quests
@@ -375,7 +381,17 @@ class SystemTrayIcon(QSystemTrayIcon):
     def open_logs(self):
         import os
         if LOG_FILE.exists():
-            os.startfile(LOG_FILE)
+            try:
+                if sys.platform.startswith("win"):
+                    os.startfile(LOG_FILE)
+                elif sys.platform.startswith("linux"):
+                    subprocess.Popen(["xdg-open", str(LOG_FILE)])
+                elif sys.platform.startswith("darwin"):  # macOS
+                    subprocess.Popen(["open", str(LOG_FILE)])
+                else:
+                    self.showMessage("Logs", "Unsupported OS for opening logs.", QSystemTrayIcon.Warning, 3000)
+            except Exception as e:
+                self.showMessage("Logs", f"Error opening logs: {e}", QSystemTrayIcon.Warning, 3000)
         else:
             self.showMessage(TEXTS.get("logs_title", "Logs"), TEXTS.get("open_logs_error", "No log file found."), QSystemTrayIcon.Warning, 3000)
 
