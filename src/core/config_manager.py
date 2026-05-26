@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from typing import Dict, Optional
 from src.core.utils import safe_json_load, save_json, CONFIG_DIR
@@ -43,7 +44,7 @@ class ConfigManager:
 
         # Si no existe, mostrar error en logs pero NO abrir Tkinter
         if not fixed_path.exists():
-            logger.error(f"❌ No se encontró {fixed_path}. Se cargará un JSON vacío.")
+            logger.error(f"❌ {fixed_path} not found. An empty JSON will be loaded.")
             self.games_config = {}
             self.games_config_path = fixed_path
             return
@@ -53,20 +54,20 @@ class ConfigManager:
         if isinstance(data, dict):
             self.games_config = data
             self.games_config_path = fixed_path
-            logger.info(TEXTS.get("games_config_merged", "✅ games_config_merged.json cargado automáticamente: {fixed_path}").format(fixed_path=fixed_path))
+            logger.info(TEXTS.get("games_config_merged", "✅ games_config_merged.json loaded automatically: {fixed_path}").format(fixed_path=fixed_path))
             self._log_games_summary()
         else:
-            logger.warning(TEXTS.get("games_config_invalid", "⚠️ games_config_merged.json no contiene un objeto JSON válido."))
+            logger.warning(TEXTS.get("games_config_invalid", "⚠️ games_config_merged.json does not contain a valid JSON object."))
             self.games_config = {}
             self.games_config_path = fixed_path
 
     def _log_games_summary(self, verbose=False):
         count = len(self.games_config)
         if count == 0:
-            logger.warning(TEXTS.get("no_games_found", "⚠️ No se encontraron juegos en la configuración."))
+            logger.warning(TEXTS.get("no_games_found", "⚠️ No games found in configuration."))
             return
         
-        logger.info(TEXTS.get("games_loaded", "📦 Juegos cargados: {count}").format(count=count))
+        logger.info(TEXTS.get("games_loaded", "📦 Games loaded: {count}").format(count=count))
 
     def get_game_mapping(self):
         return self.games_config

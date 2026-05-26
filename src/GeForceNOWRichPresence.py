@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication
 from src.core.utils import (
     BASE_DIR, CONFIG_DIR, LOGS_DIR, LANG_DIR, ASSETS_DIR, LOG_FILE, ENV_PATH,
     get_lang_from_registry, load_locale, ensure_env_file, acquire_lock, release_lock,
-    set_autostart_windows
+    set_autostart_windows, IS_WINDOWS, IS_LINUX, IS_MACOS
 )
 from src.core.config_manager import ConfigManager
 from src.core.cookie_manager import CookieManager
@@ -53,20 +53,20 @@ def main():
     args, unknown = parser.parse_known_args()
     
     if args.delay > 0:
-        logger.info(f"Esperando {args.delay} segundos antes de iniciar...")
+        logger.info(f"Waiting {args.delay} seconds before starting...")
         time.sleep(args.delay)
 
     # 1. Ensure .env and load it
     actual_env_path = ensure_env_file(ENV_PATH)
     try:
         load_dotenv(actual_env_path)
-        logger.debug(".env cargado")
+        logger.debug(".env loaded")
     except Exception:
-        logger.debug("python-dotenv no disponible o .env no encontrado")
+        logger.debug("python-dotenv not available or .env not found")
 
     # 2. Acquire Lock
     if not acquire_lock():
-        logger.warning("Otra instancia ya está corriendo. Saliendo.")
+        logger.warning("Another instance is already running. Exiting.")
         sys.exit(0)
 
     # 3. Load Locale
@@ -88,18 +88,18 @@ def main():
     # 6. Initialize Managers First (moved up so we can read settings)
     config_manager = ConfigManager(CONFIG_DIR / "config_path.txt")
 
-    if config_manager.get_setting("start_with_windows", False):
+    if IS_WINDOWS and config_manager.get_setting("start_with_windows", False):
         try:
             import winshell
             app_name = "GeForceNOWRichPresence"
             shortcut_path = os.path.join(winshell.startup(), f"{app_name}.lnk")
             if not os.path.exists(shortcut_path):
-                logger.info("Creando acceso directo de inicio de Windows faltante...")
+                logger.info("Creating missing Windows startup shortcut...")
                 set_autostart_windows(True)
         except ImportError:
-            logger.debug("winshell no disponible para comprobar acceso directo.")
+            logger.debug("winshell not available to verify startup shortcut.")
         except Exception as e:
-            logger.error(f"Error comprobando acceso directo de inicio de Windows: {e}")
+            logger.error(f"Error checking Windows startup shortcut: {e}")
 
     # 5.1 Launch Apps
     if config_manager.get_setting("start_discord_on_launch", False):
@@ -128,14 +128,14 @@ def main():
     )
 
     # 6.1 Optional Cookie Fetch
-    if config_manager.get_setting("get_cookie_on_launch", True):
-        logger.info("Intentando obtener cookie de Steam al inicio (según configuración)...")
+    if config_manager.get_setting("get_cookie_on_launch", True) or not steam_cookie_env:
+        logger.info("Attempting to obtain Steam cookie on startup...")
         cookie = cookie_manager.get_steam_cookie(confirm_callback=None)
         if cookie:
             presence_manager.update_cookie(cookie)
 
     # Cleanup residues from previous sessions
-    logger.info(" 🧹 Limpiando residuos de sesiones anteriores...")
+    logger.info(" 🧹 Cleaning up residues from previous sessions...")
     presence_manager.close_fake_executable()
 
     # 7. Initialize UI

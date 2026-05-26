@@ -1,7 +1,10 @@
 import json
 import os
 import sys
-import winreg
+try:
+    import winreg
+except ImportError:
+    winreg = None  # Linux için
 from pathlib import Path
 
 def resource_path(relative_path):

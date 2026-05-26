@@ -24,12 +24,12 @@ class GFNReinstallerWorker(QThread):
             self.started_reinstall.emit()
             self.progress_update.emit(0)
             self.status_update.emit("repair_status_init")
-            logger.info("🛠️ Inciando reparación completa de GeForce NOW...")
+            logger.info("🛠️ Starting full repair of GeForce NOW...")
             
             # 1. Kill GFN processes
             self.status_update.emit("repair_status_kill")
             self.progress_update.emit(10)
-            logger.info("🔪 Cerrando procesos de GeForce NOW...")
+            logger.info("🔪 Closing GeForce NOW processes...")
             for proc in psutil.process_iter(attrs=['name']):
                 name = (proc.info.get('name') or "").lower()
                 if "geforcenow" in name:
@@ -43,16 +43,16 @@ class GFNReinstallerWorker(QThread):
             # 2. Clean corrupted files (Uninstall)
             self.status_update.emit("repair_status_uninstall")
             self.progress_update.emit(25)
-            logger.info("🗑️ Eliminando archivos locales (Cef/AppData)...")
+            logger.info("🗑️ Deleting local files (Cef/AppData)...")
             local_appdata = os.getenv("LOCALAPPDATA", "")
             if local_appdata:
                 gfn_dir = Path(local_appdata) / "NVIDIA Corporation" / "GeForceNOW"
                 if gfn_dir.exists():
                     try:
                         shutil.rmtree(gfn_dir, ignore_errors=True)
-                        logger.info("✅ Archivos de GeForce NOW eliminados.")
+                        logger.info("✅ GeForce NOW files deleted.")
                     except Exception as e:
-                        logger.warning(f"⚠️ No se pudo eliminar completamente la carpeta: {e}")
+                        logger.warning(f"⚠️ Could not completely delete the folder: {e}")
             
             # 3. Download installer
             self.status_update.emit("repair_status_download")
@@ -60,7 +60,7 @@ class GFNReinstallerWorker(QThread):
             url = "https://download.nvidia.com/gfnpc/GeForceNOW-release.exe"
             installer_path = os.path.join(tempfile.gettempdir(), "GeForceNOW-release.exe")
             
-            logger.info("⬇️ Descargando instalador de GFN...")
+            logger.info("⬇️ Downloading GFN installer...")
             response = requests.get(url, stream=True, timeout=60)
             response.raise_for_status()
             
@@ -76,7 +76,7 @@ class GFNReinstallerWorker(QThread):
                         percent = int(40 + (downloaded / total_size) * 40)
                         self.progress_update.emit(percent)
                     
-            logger.info("✅ Instalador descargado. Ejecutando instalación silenciosa...")
+            logger.info("✅ Installer downloaded. Running silent installation...")
             
             # 4. Run installer silently
             self.status_update.emit("repair_status_install")
@@ -88,10 +88,10 @@ class GFNReinstallerWorker(QThread):
             if result.returncode == 0:
                 self.progress_update.emit(100)
                 self.status_update.emit("repair_status_done")
-                logger.info("✅ Reinstalación completada con éxito.")
+                logger.info("✅ Reinstallation completed successfully.")
                 self.finished_reinstall.emit()
             else:
-                logger.error(f"❌ Error en la instalación: {result.stderr}")
+                logger.error(f"❌ Installation error: {result.stderr}")
                 self.error_occurred.emit(f"Installer returned code {result.returncode}")
                 
             # Cleanup installer file
@@ -101,6 +101,6 @@ class GFNReinstallerWorker(QThread):
                 pass
 
         except Exception as e:
-            logger.error(f"❌ Error durante reinstalación silenciosa: {e}")
+            logger.error(f"❌ Error during silent reinstallation: {e}")
             self.error_occurred.emit(str(e))
 

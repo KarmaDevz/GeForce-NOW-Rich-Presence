@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(3,0,19,0),
-    prodvers=(3,0,19,0),
+    filevers=(3,0,20,0),
+    prodvers=(3,0,20,0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -18,11 +18,11 @@ VSVersionInfo(
           [
             StringStruct(u'CompanyName', u'KarmaDevz'),
             StringStruct(u'FileDescription', u'GeForce NOW Rich Presence'),
-            StringStruct(u'FileVersion', u'3.0.19.0'),
+            StringStruct(u'FileVersion', u'3.0.20.0'),
             StringStruct(u'InternalName', u'GeForce NOW Rich Presence'),
             StringStruct(u'OriginalFilename', u'GeForceNOWRichPresence.exe'),
             StringStruct(u'ProductName', u'GeForce NOW Rich Presence'),
-            StringStruct(u'ProductVersion', u'3.0.19.0')
+            StringStruct(u'ProductVersion', u'3.0.20.0')
           ]
         )
       ]

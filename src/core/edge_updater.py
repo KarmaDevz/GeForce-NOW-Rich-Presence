@@ -20,7 +20,7 @@ from src.core.utils import DRIVER_PATH, IS_WINDOWS
 logger = logging.getLogger('geforce_presence')
 
 class EdgeDriverUpdater:
-    """
+    r"""
     Automatic Edge Driver Updater.
     Checks for the installed Edge version via Registry (HKCU\Software\Microsoft\Edge\BLBeacon)
     and downloads the matching WebDriver. If checking registry is denied/fails,
@@ -78,7 +78,7 @@ class EdgeDriverUpdater:
         self.download_latest_version()
 
     def get_edge_version_from_registry(self):
-        """
+        r"""
         Reads HKEY_CURRENT_USER\Software\Microsoft\Edge\BLBeacon -> version
         """
         if not winreg:

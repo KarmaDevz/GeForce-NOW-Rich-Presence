@@ -55,37 +55,7 @@ DISCORD_ASK_TIMEOUT = 10
 LOCK_FILE = Path(tempfile.gettempdir()) / "geforce_presence.lock"
 
 def get_lang_from_registry(default="en"):
-    if IS_WINDOWS:
-        try:
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\GeForcePresence")
-            lang, _ = winreg.QueryValueEx(key, "lang")
-            winreg.CloseKey(key)
-            return _normalize_lang(lang, default)
-        except Exception:
-            return default
-    elif IS_MACOS:
-        try:
-            # Try reading from macOS defaults
-            # defaults read com.nvidia.geforcenow lang
-            # Note: This assumes the app stores it there, or we check system lang
-            result = subprocess.run(
-                ["defaults", "read", "com.nvidia.geforcenow", "lang"],
-                capture_output=True, text=True
-            )
-            if result.returncode == 0:
-                return _normalize_lang(result.stdout.strip(), default)
-        except Exception:
-            pass
-        
-        # Fallback to system locale
-        lang = os.getenv("LANG", default)
-        return _normalize_lang(lang, default)
-    
-    elif IS_LINUX:
-        lang = os.getenv("LANG", default)
-        return _normalize_lang(lang, default)
-
-    return default
+    return "en"
 
 def _normalize_lang(lang_str: str, default: str) -> str:
     lang_str = lang_str.lower()
@@ -102,7 +72,7 @@ def set_autostart_windows(enable: bool):
     try:
         import winshell
     except ImportError:
-        logger.error("winshell no está instalado o falló su importación.")
+        logger.error("winshell is not installed or import failed.")
         return
 
     app_name = "GeForceNOWRichPresence"
@@ -140,14 +110,14 @@ def set_autostart_windows(enable: bool):
                 shortcut.path = target_path
                 shortcut.arguments = arguments
                 shortcut.description = "Start GeForce NOW Rich Presence"
-            logger.info("✅ Acceso directo creado en shell:startup para iniciar con Windows (retraso 60s).")
+            logger.info("✅ Shortcut created in shell:startup to start with Windows (60s delay).")
         else:
             # Eliminar el acceso directo
             if os.path.exists(shortcut_path):
                 os.remove(shortcut_path)
-            logger.info("✅ Acceso directo eliminado de shell:startup.")
+            logger.info("✅ Shortcut removed from shell:startup.")
     except Exception as e:
-        logger.error(f"Error modificando inicio de Windows (winshell): {e}")
+        logger.error(f"Error modifying Windows startup (winshell): {e}")
 
 def load_locale(lang: str = "en") -> dict:
     path = LANG_DIR / f"{lang}.json"
@@ -171,7 +141,7 @@ STEAM_COOKIE=''
     try:
         if not path.exists():
             path.write_text(default_env_content, encoding="utf-8")
-            logger.info(f"✅ .env creado en: {path}")
+            logger.info(f"✅ .env created at: {path}")
     except PermissionError:
         if IS_WINDOWS:
             appdata = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming"))
@@ -185,14 +155,14 @@ STEAM_COOKIE=''
         alt = appdir / ".env"
         if not alt.exists():
             alt.write_text(default_env_content, encoding="utf-8")
-            logger.info(f"⚠️ No se pudo crear .env junto al exe; creado en: {alt}")
+            logger.info(f"⚠️ Could not create .env next to exe; created at: {alt}")
         return alt
     return path
 
 def ensure_driver_executable(src_path: Path) -> str:
     try:
         if not src_path.exists():
-            logger.warning(f"Driver no encontrado en recursos: {src_path}")
+            logger.warning(f"Driver not found in resources: {src_path}")
             return str(src_path) 
         tmpdir = Path(tempfile.gettempdir()) / "geforce_driver"
         tmpdir.mkdir(parents=True, exist_ok=True)
@@ -204,7 +174,7 @@ def ensure_driver_executable(src_path: Path) -> str:
             pass
         return str(dest)
     except Exception as e:
-        logger.error(f"Error preparando driver: {e}")
+        logger.error(f"Error preparing driver: {e}")
         return str(src_path)
 
 def acquire_lock() -> bool:
@@ -213,15 +183,15 @@ def acquire_lock() -> bool:
             pid = int(LOCK_FILE.read_text().strip())
 
             if psutil.pid_exists(pid):
-                logger.warning(f"⚠️ Ya existe otra instancia (PID {pid}). Reiniciando...")
+                logger.warning(f"⚠️ Another instance is already running (PID {pid}). Restarting...")
                 try:
                     # Cierra la instancia anterior (si es posible)
                     p = psutil.Process(pid)
                     p.terminate()
                     p.wait(5)
-                    logger.info("✅ Instancia anterior finalizada correctamente.")
+                    logger.info("✅ Previous instance terminated successfully.")
                 except Exception as e:
-                    logger.error(f"No se pudo cerrar la instancia anterior: {e}")
+                    logger.error(f"Could not terminate the previous instance: {e}")
                 
                 # We don't restart here, we just return False or let the caller handle it.
                 # The original code restarted the process.
@@ -240,7 +210,7 @@ def acquire_lock() -> bool:
                 # We can try to proceed.
             else:
                 LOCK_FILE.unlink()
-                logger.debug("Lock huérfano eliminado.")
+                logger.debug("Stale lock file removed.")
         except Exception:
             try:
                 LOCK_FILE.unlink()
@@ -263,25 +233,25 @@ def safe_json_load(path: Path) -> Optional[Dict]:
         with path.open("r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        logger.error(f"Error cargando JSON {path}: {e}")
+        logger.error(f"Error loading JSON {path}: {e}")
         return None
 
 def save_cookie_to_env(cookie_value: str, env_path: Path):
     try:
         if env_path.exists():
             set_key(str(env_path), "STEAM_COOKIE", cookie_value)
-            logger.info("💾 Cookie guardada en .env correctamente.")
+            logger.info("💾 Cookie saved to .env successfully.")
         else:
-            logger.warning("⚠️ No se encontró el archivo .env para guardar la cookie.")
+            logger.warning("⚠️ .env file not found to save cookie.")
     except Exception as e:
-        logger.error(f"❌ Error guardando cookie en .env: {e}")
+        logger.error(f"❌ Error saving cookie to .env: {e}")
 
 def save_json(obj, path: Path):
     try:
         with path.open("w", encoding="utf-8") as f:
             json.dump(obj, f, indent=4, ensure_ascii=False)
     except Exception as e:
-        logger.error(f"Error guardando JSON {path}: {e}")
+        logger.error(f"Error saving JSON {path}: {e}")
 
 def calculate_file_hash(path: Path, algorithm: str = "sha256") -> Optional[str]:
     try:
@@ -291,5 +261,5 @@ def calculate_file_hash(path: Path, algorithm: str = "sha256") -> Optional[str]:
                 hash_func.update(chunk)
         return hash_func.hexdigest()
     except Exception as e:
-        logger.error(f"Error calculando hash de {path}: {e}")
+        logger.error(f"Error calculating hash of {path}: {e}")
         return None

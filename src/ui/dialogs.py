@@ -16,7 +16,7 @@ except Exception:
 logger = logging.getLogger('geforce_presence')
 
 
-# ---- ESTILOS GLOBALES ----
+# ---- GLOBAL STYLES ----
 GAMING_STYLESHEET = """
     QDialog {
         background-color: #0d0e10;
@@ -245,7 +245,7 @@ class AskGameDialog(QDialog):
         self.setFixedSize(460, 280) # Increased size for better layout
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
-        # ---- 🎮 ESTILO GAMING OSCURO ----
+        # ---- 🎮 DARK GAMING STYLE ----
         self.setStyleSheet(GAMING_STYLESHEET)
 
         # ---- LAYOUT ----
@@ -266,14 +266,14 @@ class AskGameDialog(QDialog):
         sec_btns_layout = QVBoxLayout()
         sec_btns_layout.setSpacing(10)
 
-        self.quest_mode_btn = QPushButton(TEXTS.get("quest_mode", "Misiones de Discord (Múltiples Juegos)"))
+        self.quest_mode_btn = QPushButton(TEXTS.get("quest_mode", "Discord Quest Mode (Multiple Games)"))
         self.quest_mode_btn.setObjectName("secondary")
         self.quest_mode_btn.setAutoDefault(False)
         self.quest_mode_btn.clicked.connect(self.on_quest_mode_clicked)
         self.quest_mode_btn.setStyleSheet("padding: 10px; font-size: 13px;") # Make button slightly taller
         sec_btns_layout.addWidget(self.quest_mode_btn)
 
-        self.update_list_btn = QPushButton(TEXTS.get("update_list", "Actualizar base de datos de juegos"))
+        self.update_list_btn = QPushButton(TEXTS.get("update_list", "Update games database"))
         self.update_list_btn.setObjectName("secondary")
         self.update_list_btn.setAutoDefault(False)
         self.update_list_btn.clicked.connect(self.on_update_list_clicked)
@@ -282,7 +282,7 @@ class AskGameDialog(QDialog):
 
         layout.addLayout(sec_btns_layout)
 
-        # Botones más compactos
+        # More compact buttons
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(12)
 
@@ -342,7 +342,7 @@ class QuestListDialog(QDialog):
         layout.setContentsMargins(15, 15, 15, 15)
         layout.setSpacing(10)
         
-        lbl = QLabel(TEXTS.get("active_games", "Juegos activos (15 minutos máx.)"))
+        lbl = QLabel(TEXTS.get("active_games", "Active Games (15 minutes max.)"))
         lbl.setObjectName("title_label")
         lbl.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl)
@@ -357,11 +357,11 @@ class QuestListDialog(QDialog):
         layout.addWidget(self.list_widget)
         
         # Add new game button
-        add_btn = QPushButton(TEXTS.get("force_new_game", "Forzar Nuevo Juego"))
+        add_btn = QPushButton(TEXTS.get("force_new_game", "Force New Game"))
         add_btn.clicked.connect(self.on_add_game)
         layout.addWidget(add_btn)
         
-        self.close_btn = QPushButton(TEXTS.get("close_window", "Cerrar Ventana (Juegos continuarán)"))
+        self.close_btn = QPushButton(TEXTS.get("close_window", "Close Window (Games will continue)"))
         self.close_btn.setObjectName("secondary")
         self.close_btn.clicked.connect(self.accept)
         layout.addWidget(self.close_btn)
@@ -383,7 +383,7 @@ class QuestListDialog(QDialog):
         # But we are in a dialog.
         
         # Let's import AskGameDialog locally to avoid circulars if any, though we are in same file
-        dlg = AskGameDialog(parent=self, message="Nombre del juego para Quest:")
+        dlg = AskGameDialog(parent=self, message="Game name for Quest:")
         dlg.quest_mode_btn.hide() # Force quest mode if adding from here
         
         if dlg.exec_() == QDialog.Accepted:
@@ -419,7 +419,7 @@ class QuestListDialog(QDialog):
         
         quests = getattr(self.pm, "active_quests", {})
         if not quests:
-            self.list_widget.addItem("No hay juegos activos en modo Quest.")
+            self.list_widget.addItem("No active games in Quest mode.")
             return
 
         from PyQt5.QtWidgets import QWidget, QProgressBar, QHBoxLayout, QLabel, QPushButton
@@ -484,12 +484,12 @@ class QuestListDialog(QDialog):
             """)
             
             if data.get('finished', False):
-                status_text = "Estado: Detenido"
+                status_text = "Status: Stopped"
                 progress.setValue(0)
             else:
                 mins = int(remaining // 60)
                 secs = int(remaining % 60)
-                status_text = f"⏱️ Tiempo restante: {mins:02d}:{secs:02d}"
+                status_text = f"⏱️ Time remaining: {mins:02d}:{secs:02d}"
                 
             status_lbl = QLabel(status_text)
             status_lbl.setStyleSheet("color: #dcddde; font-size: 13px; font-weight: 500; padding-top: 2px;")
@@ -522,7 +522,7 @@ class MatchSelectionDialog(QDialog):
     def __init__(self, game_key, candidates, parent=None):
         super().__init__(parent)
 
-        title_text = TEXTS.get("match_title", "Coincidencias para: {busqueda}").replace("{busqueda}", game_key)
+        title_text = TEXTS.get("match_title", "Matches for: {busqueda}").replace("{busqueda}", game_key)
         self.setWindowTitle(title_text)
         self.setWindowIcon(QIcon(str(ASSETS_DIR / "geforce.ico")))
         self.setMinimumWidth(540)
@@ -531,7 +531,7 @@ class MatchSelectionDialog(QDialog):
         self.candidates = candidates
         self.selected_match = None
 
-        # ---- 🎮 ESTILO GAMING OSCURO ----
+        # ---- 🎮 DARK GAMING STYLE ----
         self.setStyleSheet(GAMING_STYLESHEET)
 
         # ---- LAYOUT ----
@@ -543,9 +543,9 @@ class MatchSelectionDialog(QDialog):
         
         self.table_widget = QTableWidget(len(candidates), 3)
         self.table_widget.setHorizontalHeaderLabels([
-            TEXTS.get("match_col_name", "Nombre"),
-            TEXTS.get("match_col_score", "Coincidencia"),
-            TEXTS.get("match_col_quests", "Misiones de discord")
+            TEXTS.get("match_col_name", "Name"),
+            TEXTS.get("match_col_score", "Match"),
+            TEXTS.get("match_col_quests", "Discord Quests")
         ])
         
         self.table_widget.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -603,10 +603,10 @@ class MatchSelectionDialog(QDialog):
         # ---- BOTONES ----
         btn_layout = QHBoxLayout()
 
-        self.confirm_btn = QPushButton(TEXTS.get("confirm", "Confirmar"))
+        self.confirm_btn = QPushButton(TEXTS.get("confirm", "Confirm"))
         self.confirm_btn.clicked.connect(self.on_confirm)
 
-        self.ignore_btn = QPushButton(TEXTS.get("ignore", "Ignorar"))
+        self.ignore_btn = QPushButton(TEXTS.get("ignore", "Ignore"))
         self.ignore_btn.setObjectName("secondary")
         self.ignore_btn.clicked.connect(self.reject)
 
@@ -624,8 +624,8 @@ class MatchSelectionDialog(QDialog):
         else:
             QMessageBox.warning(
                 self,
-                TEXTS.get("selection_required", "Selección requerida"),
-                TEXTS.get("selection_required_msg", "Por favor selecciona una opción de la lista.")
+                TEXTS.get("selection_required", "Selection required"),
+                TEXTS.get("selection_required_msg", "Please select an option from the list.")
             )
 
 
@@ -654,12 +654,12 @@ class CustomPresenceDialog(QDialog):
             layout.addLayout(r)
             return widget
 
-        self.details_edit = add_row("Detalles (Línea 1):", QLineEdit())
-        self.details_edit.setPlaceholderText("Ej: Jugando Competitivo")
+        self.details_edit = add_row("Details (Line 1):", QLineEdit())
+        self.details_edit.setPlaceholderText("e.g. Playing Competitive")
         self.details_edit.setText(current_data.get("custom_details", ""))
 
-        self.state_edit = add_row("Estado (Línea 2):", QLineEdit())
-        self.state_edit.setPlaceholderText("Ej: En grupo de 5")
+        self.state_edit = add_row("State (Line 2):", QLineEdit())
+        self.state_edit.setPlaceholderText("e.g. In a party of 5")
         self.state_edit.setText(current_data.get("custom_state", ""))
 
         # Party Size Row
@@ -675,25 +675,25 @@ class CustomPresenceDialog(QDialog):
         self.party_max.setValue(current_data.get("custom_party_size_max", 0))
         
         p_sub = QVBoxLayout()
-        p_sub.addWidget(QLabel("Personas (Actual):"))
+        p_sub.addWidget(QLabel("Party Size (Current):"))
         p_sub.addWidget(self.party_current)
         party_layout.addLayout(p_sub)
         
         p_sub2 = QVBoxLayout()
-        p_sub2.addWidget(QLabel("Personas (Max):"))
+        p_sub2.addWidget(QLabel("Party Size (Max):"))
         p_sub2.addWidget(self.party_max)
         party_layout.addLayout(p_sub2)
         
         layout.addLayout(party_layout)
         
-        layout.addWidget(QLabel("Nota: Si 'Max' es 0, no se mostrará información de grupo."))
+        layout.addWidget(QLabel("Note: If 'Max' is 0, no party information will be displayed."))
 
         # Buttons
         btn_layout = QHBoxLayout()
-        self.save_btn = QPushButton("Guardar")
+        self.save_btn = QPushButton("Save")
         self.save_btn.clicked.connect(self.on_save)
         
-        self.cancel_btn = QPushButton("Cancelar")
+        self.cancel_btn = QPushButton("Cancel")
         self.cancel_btn.setObjectName("secondary")
         self.cancel_btn.clicked.connect(self.reject)
         

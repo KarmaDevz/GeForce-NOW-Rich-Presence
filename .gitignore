@@ -1,17 +1,27 @@
+# Python virtual environment
+venv/
+.venv/
+env/
 .env
-.venv*
+
+# Compiled / packaged
 __pycache__/
 *.pyc
-config/config_path.txt
-*.log
-*.spec
-dist/
+*.pyo
+*.pyd
 build/
-scripts/
-pagina/
-rocket/
-pyinstaller.bat
-instalador.iss
-mejoras_pendientes.txt
-innosetup.txt
-compile.txt
+dist/
+*.spec
+
+# Logs and user configs
+logs/
+config/games_config_merged.json
+config/discord_apps_cache.json
+
+# PyCharm / VSCode settings
+.idea/
+.vscode/
+
+# System / OS files
+.DS_Store
+Thumbs.db

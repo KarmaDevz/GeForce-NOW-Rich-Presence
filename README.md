@@ -3,18 +3,19 @@
   <br/>
   <h1>🎮 GeForce NOW Rich Presence for Discord</h1>
   <p>
-    <strong>Show your real game on Discord while playing on GeForce NOW — automatically and beautifully.</strong>
+    <strong>Display the actual game you are playing on GeForce NOW — automatically, across Windows & Linux.</strong>
   </p>
   
-  [🇪🇸 Leer en Español](./README.es.md) • [📥 Download Latest](#-installation) • [💬 Support](#-about--support)
+  [🇺🇸 English](./README.md) • [🇪🇸 Español](./README.es.md) • [🇹🇷 Türkçe](./README.tr.md)
   
   <br/>
+  <br/>
 
-  <a href="https://github.com/KarmaDevz/discord-rich-presence-for-geforcenow/releases/latest">
-    <img src="https://img.shields.io/github/v/release/KarmaDevz/GeForce-NOW-Rich-Presence?style=for-the-badge&color=00C853&logo=github&label=Latest%20Release" alt="Latest Release"/>
+  <a href="https://github.com/Enderjua/GeForce-NOW-Rich-Presence/releases/latest">
+    <img src="https://img.shields.io/github/v/release/Enderjua/GeForce-NOW-Rich-Presence?style=for-the-badge&color=00C853&logo=github&label=Latest%20Release" alt="Latest Release"/>
   </a>
-  <a href="https://github.com/KarmaDevz/GeForce-NOW-Rich-Presence/releases">
-    <img src="https://img.shields.io/github/downloads/KarmaDevz/GeForce-NOW-Rich-Presence/total?style=for-the-badge&color=2962FF&logo=github&label=Downloads" alt="Total Downloads"/>
+  <a href="https://github.com/Enderjua/GeForce-NOW-Rich-Presence/releases">
+    <img src="https://img.shields.io/github/downloads/Enderjua/GeForce-NOW-Rich-Presence/total?style=for-the-badge&color=2962FF&logo=github&label=Downloads" alt="Total Downloads"/>
   </a>
   
 </div>
@@ -23,104 +24,119 @@
 
 ## 🕹️ What is this?
 
-**GeForce NOW Rich Presence for Discord** lets you display the **actual game you're playing on GeForce NOW** directly on your Discord profile. No more vague "Playing GeForce NOW" statuses! 
+**GeForce NOW Rich Presence for Discord** lets you display the **actual game you're playing on GeForce NOW** directly on your Discord profile. No more generic "Playing GeForce NOW" statuses! 
 
-Now you can show off the **real title, game art, and custom status** in real time. Perfect for streamers, gamers, and anyone who wants their Discord presence to truly reflect their gaming sessions. 🎮💚
-
----
-
-## ✨ Features
-
-- ✅ **Automatic Detection**: Instantly recognizes the game you're running on GeForce NOW.
-- 🖼️ **Rich Game Art**: Displays real game names and high-quality images on Discord.
-- 🖱️ **System Tray Menu**: Easily force a game, open GeForce NOW, or exit from the Windows taskbar.
-- ⚡ **Plug & Play**: Works immediately out of the box — **no Python, no setup, no configuration**.
-- 📦 **Simple Installation**: Lightweight installer built with Inno Setup.
-- 💻 **Perfect Compatibility**: Fully compatible with Windows and Discord Desktop.
+This is a modern, feature-packed **fork** that brings complete multi-OS support, native Linux detection, session integration, customizable details, and reward utility tools. Perfect for streamers, gamers, and power users. 🎮💚
 
 ---
 
-## � Installation
+## ✨ Features & Major Upgrades
 
-Get up and running in less than a minute!
-
-1. Download the latest installer from the [Releases Page](https://github.com/KarmaDevz/discord-rich-presence-for-geforcenow/releases/latest).
-2. Run the `.exe` installer and follow the simple steps.
-3. Open the app — it will automatically run in the background.
-4. Launch a game on GeForce NOW and watch your Discord Rich Presence update automatically! 😎
-
----
-
-## 🧠 How it Works
-
-The application runs quietly and efficiently in the background:
-1. **Monitors** GeForce NOW activity.
-2. **Matches** the launched game against a robust built-in game list.
-3. **Pushes** the accurate Rich Presence data to your Discord client.
-4. **Maintains** the status as long as you're playing.
-
-*It’s 100% automatic — you literally don't have to configure anything.*
+* 🐧 **Linux Support (Wayland & X11 Native)** `[New / Linux Added]`
+  * Full integration with Linux systems. Features native window-matching using DBus / KDE KWin Scripting API for Wayland, and an automatic fallback to `xdotool` for X11 environments. No Wine or heavy wrappers required.
+* 🌐 **Real-time Steam Session Scraping** `[New]`
+  * Grabs your live Steam status directly using local browser cookies (fully automated for Edge/Chrome or customizable manually). This lets you display actual rich session details (e.g., *"Currently In-Game | Dota 2"*, active lobbies) in real time.
+* 🎁 **Discord Quest Mode (Multi-Presence)** `[New]`
+  * Easily unlock Discord Quests! Simulates multiple game instances cleanly in the background (15 minutes active timer limit per game) via temporary isolated processes.
+* ✏️ **Fully Customizable Presence Fields** `[New]`
+  * Manually customize details (Line 1), state (Line 2), and active party sizes (current/maximum) directly from system tray inputs.
+* 🎨 **Dark Gaming UI** `[New]`
+  * Clean, dark cybernetic theme across all interactive Qt5 system tray dialogs.
+* ⚡ **Automatic WebDriver Helper (Windows)**
+  * Self-healing Edge WebDriver checking and updating.
+* ✅ **Plug & Play**: Works immediately out of the box.
 
 ---
 
-## ⚙️ Tray Icon Options
+## 📥 Installation & Setup
 
-Access powerful features directly from your Windows system tray (bottom-right corner):
+### 🪟 Windows
 
-| Option | Description |
+1. Download the pre-built installer `.exe` from our [Latest Releases](https://github.com/Enderjua/GeForce-NOW-Rich-Presence/releases/latest).
+2. Run the installer and complete the wizard.
+3. Launch the application. It will sit quietly in your system tray (taskbar bottom-right).
+4. Launch your game on GeForce NOW and see your profile update instantly!
+
+### 🐧 Linux (Ubuntu, Debian, Fedora, Arch, etc.)
+
+Since GFN on Linux runs via browser or Electron launchers, you can easily run this app directly from source:
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Enderjua/GeForce-NOW-Rich-Presence.git
+   cd GFN-Rich-Presence
+   ```
+2. **Create and activate a virtual environment:**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+   *(Note: Ensure you have `xdotool` installed if you are running on an X11 desktop manager).*
+4. **Launch the application:**
+   ```bash
+   PYTHONPATH=. python3 src/GeForceNOWRichPresence.py
+   ```
+   *(For pure Wayland sessions, the app automatically hooks into KWin/Wayland APIs natively).*
+
+---
+
+## ⚙️ Tray Icon Commands
+
+Right-click the tray icon to manage active presence details:
+
+| Command | Description |
 | :--- | :--- |
-| 🎮 **Force Game** | Manually override and choose a specific game to display. |
-| ✅ **Get Steam Cookie**| Extract your Steam cookie to show deeper Steam Rich Presence. |
-| 🚀 **Open GeForce NOW**| Quickly launch the NVIDIA GeForce NOW app. |
-| 📊 **Sync Games** | Refresh and update the internal game recognition list. |
-| 👥 **Set Max party size**| Customize your displayed maximum party size. |
-| 📝 **Open Logs** | Access troubleshooting logs easily. |
-| ❌ **Exit** | Close the application completely. |
+| 🎮 **Force Game...** | Override automatic detection and select a specific game to display. |
+| 🎁 **Discord Quest Mode** | Launch multi-game active instances for reward completion. |
+| ✅ **Get Steam Cookie** | Extract browser cookie to fetch live Steam profile session data. |
+| 👥 **Set Max Party Size...**| Adjust displayed custom party limits. |
+| 🚀 **Open GeForce NOW** | Quickly start the GFN application launcher. |
+| 📊 **Sync Games Database** | Trigger down sync with DiscordDetectable app cache. |
+| 📝 **Open Logs** | Easily inspect background debug outputs. |
+| ❌ **Exit** | Fully terminate the program. |
 
 ---
 
-## 📸 In Action
+## 🧠 Behind the Scenes
 
-<div align="center">
-  <img src="assets/instructions.png" width="90%" alt="Discord Rich Presence Instructions" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
-</div>
+The program acts as a lightweight daemon:
+1. **Tracks** active windows (using OS APIs / KWin DBus on Wayland / Win32 APIs on Windows).
+2. **Normalizes** game window titles into clean game names.
+3. **Pulls** real-time server information or matches names against Discord's application catalog.
+4. **Spawns** a local virtual handler executable (isolated inside a temp directory) to register the rich presence directly into Discord's active client.
 
 ---
 
 ## 🧩 FAQ
 
-**Q: Do I need Python or any dependencies installed?**  
-A: Nope! Everything is fully bundled in the executable. Just install and run.
-
-**Q: Does it work with Steam or Epic Games?**  
-A: Yes! It detects games streamed through GeForce NOW, regardless of the underlying storefront platform.
+**Q: Do I need to be logged into Steam or have Python for Windows?**  
+A: No, Windows has a fully self-contained `.exe`. For Steam rich presence (party size/match data), you can grab your local browser cookie via the tray menu.
 
 **Q: Is it safe to use?**  
-A: Absolutely. It's 100% safe. No login credentials or account information are ever required.
+A: Absolutely. It runs completely locally, does not ask for or store passwords, and works cleanly alongside your official game launchers.
 
 ---
 
-## 💬 About & Support
+## 💬 Authors, Support & Contact
 
-This project was passionately created by [**KarmaDevz**](https://github.com/KarmaDevz) to make the **GeForce NOW + Discord** integration as seamless as possible.
+This project is a collaborative effort between:
 
-⭐️ **Love the project?** Please consider giving this repository a star! It helps a lot!
+* 🧑‍💻 **KarmaDevz** - Original creator and core developer of the Windows package.
+  * [GitHub Profile](https://github.com/KarmaDevz) • [Paypal Support](https://paypal.me/KarmaDevz)
+* 🛠️ **Enderjua** - Fork maintainer, Linux native integration, Quest Mode implementation, and feature upgrades.
+  * **GitHub Fork:** [Enderjua/GeForce-NOW-Rich-Presence](https://github.com/Enderjua/GeForce-NOW-Rich-Presence)
+  * **Discord Server:** [Join our Support Discord](https://discord.gg/A9ESFRTzqR)
+  * **Email:** enderjua@gmail.com
+  * **Instagram:** [@marijuabakunin](https://instagram.com/marijuabakunin)
+
+---
 
 <div align="center">
-  <a href="https://github.com/KarmaDevz/discord-rich-presence-for-geforcenow/releases/latest">
+  <a href="https://github.com/Enderjua/GeForce-NOW-Rich-Presence/releases/latest">
     <img src="https://img.shields.io/badge/Download%20Now%20➡️-1B5E20?style=for-the-badge&logo=nvidia&logoColor=white" alt="Download now"/>
-  </a>
-  <a href="https://paypal.me/KarmaDevz" target="_blank">
-    <img src="https://img.shields.io/badge/💖%20Sponsor%20this%20Project-0070ba?style=for-the-badge&logo=paypal&logoColor=white" alt="Paypal Donations">
-  </a>
-</div>
-
-<br/>
-
-<div align="center">
-  <h3>🆘 Need Support?</h3>
-  <p>Join the official <strong>GeForce NOW by Digevo</strong> server to get help from the community!</p>
-  <a href="https://discord.gg/geforce-now-by-digevo-1412524071878525050">
-    <img src="https://img.shields.io/badge/Join%20Discord%20Server-2962FF?style=for-the-badge&logo=discord&logoColor=white" alt="GeForce NOW by Digevo"/>
   </a>
 </div>

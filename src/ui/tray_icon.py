@@ -1,11 +1,14 @@
 import logging
 import threading
 import time
+import os
+import subprocess
+import sys
 from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QAction, QApplication, QMessageBox, QProgressDialog
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog
-from src.core.utils import ASSETS_DIR, LOG_FILE, set_autostart_windows
+from src.core.utils import ASSETS_DIR, LOG_FILE, set_autostart_windows, IS_WINDOWS, IS_LINUX, IS_MACOS
 from src.core.app_launcher import AppLauncher
 from src.ui.dialogs import AskGameDialog, MatchSelectionDialog, GamingMessageBox, GamingInputDialog, QuestListDialog, CustomPresenceDialog, AboutDialog, GFNRepairDialog, GAMING_STYLESHEET
 from src.core.utils import get_lang_from_registry, load_locale
@@ -116,29 +119,29 @@ class SystemTrayIcon(QSystemTrayIcon):
             cp_action.triggered.connect(self.open_custom_presence_dialog)
             self.menu.addAction(cp_action)
 
-        # Configuración Submenú
-        config_menu = self.menu.addMenu(TEXTS.get("tray_config", "Configuración"))
+        # Configuration Submenu
+        config_menu = self.menu.addMenu(TEXTS.get("tray_config", "Configuration"))
         
-        # 1. Iniciar con Windows
-        start_win_action = QAction(TEXTS.get("config_start_windows", "Iniciar con Windows"), self.menu, checkable=True)
+        # 1. Start with Windows
+        start_win_action = QAction(TEXTS.get("config_start_windows", "Start with Windows"), self.menu, checkable=True)
         start_win_action.setChecked(self.config_manager.get_setting("start_with_windows", False))
         start_win_action.triggered.connect(self.toggle_start_windows)
         config_menu.addAction(start_win_action)
 
-        # 2. Iniciar GeForce NOW
-        start_gfn_action = QAction(TEXTS.get("config_start_gfn", "Iniciar GeForce NOW con la aplicación"), self.menu, checkable=True)
+        # 2. Start GeForce NOW
+        start_gfn_action = QAction(TEXTS.get("config_start_gfn", "Start GeForce NOW on launch"), self.menu, checkable=True)
         start_gfn_action.setChecked(self.config_manager.get_setting("start_gfn_on_launch", False))
         start_gfn_action.triggered.connect(lambda chk: self.config_manager.set_setting("start_gfn_on_launch", chk))
         config_menu.addAction(start_gfn_action)
 
-        # 3. Iniciar Discord
-        start_discord_action = QAction(TEXTS.get("config_start_discord", "Iniciar Discord con la aplicación"), self.menu, checkable=True)
+        # 3. Start Discord
+        start_discord_action = QAction(TEXTS.get("config_start_discord", "Start Discord on launch"), self.menu, checkable=True)
         start_discord_action.setChecked(self.config_manager.get_setting("start_discord_on_launch", False))
         start_discord_action.triggered.connect(lambda chk: self.config_manager.set_setting("start_discord_on_launch", chk))
         config_menu.addAction(start_discord_action)
 
-        # 4. Obtener cookie al iniciar
-        start_cookie_action = QAction(TEXTS.get("config_get_cookie", "Obtener cookie al iniciar la aplicación"), self.menu, checkable=True)
+        # 4. Get cookie on launch
+        start_cookie_action = QAction(TEXTS.get("config_get_cookie", "Get cookie on launch"), self.menu, checkable=True)
         start_cookie_action.setChecked(self.config_manager.get_setting("get_cookie_on_launch", True))
         start_cookie_action.triggered.connect(lambda chk: self.config_manager.set_setting("get_cookie_on_launch", chk))
         config_menu.addAction(start_cookie_action)
@@ -189,10 +192,10 @@ class SystemTrayIcon(QSystemTrayIcon):
 
         if self.pm.forced_game:
             self.pm.stop_force_game()
-            self.showMessage("OK", "Forzado de juego detenido.", QSystemTrayIcon.Information, 3000)
+            self.showMessage("OK", "Forced game stopped.", QSystemTrayIcon.Information, 3000)
             self.update_menu()
             return
-
+ 
         dialog = AskGameDialog(title=TEXTS.get("force_game", "Force Game"), message=TEXTS.get("game_name", "Game Name:"))
         
         def on_quest_opened():
@@ -202,13 +205,13 @@ class SystemTrayIcon(QSystemTrayIcon):
             dlg.exec_()
             
         def on_update_list_opened():
-            self.showMessage("Info", "Actualizando lista de juegos de Discord...", QSystemTrayIcon.Information, 4000)
+            self.showMessage("Info", "Updating Discord games list...", QSystemTrayIcon.Information, 4000)
             QApplication.processEvents()
             apps = self.pm._fetch_discord_apps_cached(force_download=True)
             if apps:
-                self.showMessage("Info", f"Lista de juegos actualizada exitosamente ({len(apps)} apps).", QSystemTrayIcon.Information, 3000)
+                self.showMessage("Info", f"Games list updated successfully ({len(apps)} apps).", QSystemTrayIcon.Information, 3000)
             else:
-                self.showMessage("Error", "No se pudo actualizar la lista de juegos de Discord.", QSystemTrayIcon.Warning, 4000)
+                self.showMessage("Error", "Could not update Discord games list.", QSystemTrayIcon.Warning, 4000)
 
         dialog.quest_mode_requested.connect(on_quest_opened)
         dialog.update_list_requested.connect(on_update_list_opened)
@@ -247,7 +250,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         if not options:
             status = self.pm.check_discord_cache_status()
             if status["status"] == "MISSING" or status["hours"] > 168:
-                self.showMessage("Buscando...", f"No encontrado en caché (antigua/faltante). Descargando datos recientes para '{game_name}'...", QSystemTrayIcon.Information, 4000)
+                self.showMessage("Searching...", f"Not found in cache (old/missing). Downloading recent data for '{game_name}'...", QSystemTrayIcon.Information, 4000)
                 QApplication.processEvents() 
                 apps = self.pm._fetch_discord_apps_cached(force_download=True)
                 
@@ -261,11 +264,11 @@ class SystemTrayIcon(QSystemTrayIcon):
                 options = options[:50]
         
         if not options:
-            self.showMessage("Info", "Sin coincidencias encontradas.", QSystemTrayIcon.Information, 3000)
+            self.showMessage("Info", "No matches found.", QSystemTrayIcon.Information, 3000)
             return False
-
+ 
         # Show selection dialog
-        sel_dialog = MatchSelectionDialog("Seleccionar Juego (Quest)", options)
+        sel_dialog = MatchSelectionDialog("Select Game (Quest)", options)
         if sel_dialog.exec_() == QDialog.Accepted and sel_dialog.selected_match:
             match = sel_dialog.selected_match
             self.apply_quest_game(match)
@@ -305,7 +308,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         if not options:
             status = self.pm.check_discord_cache_status()
             if status["status"] == "MISSING" or status["hours"] > 168:
-                self.showMessage("Buscando...", f"No encontrado en caché (antigua/faltante). Descargando datos recientes de Discord para '{game_name}'...", QSystemTrayIcon.Information, 4000)
+                self.showMessage("Searching...", f"Not found in cache (old/missing). Downloading recent Discord data for '{game_name}'...", QSystemTrayIcon.Information, 4000)
                 QApplication.processEvents() # Keep UI responsive (mostly)
                 
                 # Update cache
@@ -324,11 +327,11 @@ class SystemTrayIcon(QSystemTrayIcon):
         # Note: We don't apply automatically here loop; we show selection dialog
 
         if not options:
-            self.showMessage("Info", "Sin coincidencias en JSON ni Discord (incluso tras actualizar).", QSystemTrayIcon.Information, 3000)
+            self.showMessage("Info", "No matches found in JSON or Discord (even after update).", QSystemTrayIcon.Information, 3000)
             return
 
         # Show selection dialog
-        sel_dialog = MatchSelectionDialog("Seleccionar juego", options)
+        sel_dialog = MatchSelectionDialog("Select Game", options)
         if sel_dialog.exec_() == QDialog.Accepted and sel_dialog.selected_match:
             match = sel_dialog.selected_match
             self.apply_force_game(match)
@@ -351,16 +354,16 @@ class SystemTrayIcon(QSystemTrayIcon):
                 
                 self.pm.client_id = cid
                 self.pm._connect_rpc(cid)
-                logger.info(f"🔁 RPC reconectado con client_id forzado: {cid}")
+                logger.info(f"🔁 RPC reconnected with forced client_id: {cid}")
             except Exception as e:
-                logger.error(f"❌ Error reconectando RPC tras forzar juego: {e}")
+                logger.error(f"❌ Error reconnecting RPC after forcing game: {e}")
                 threading.Thread(target=reconnect_after_delay, daemon=True).start()
 
         if exe:
             try:
                 self.pm.close_fake_executable()
             except Exception as e:
-                logger.debug(f"No se pudo cerrar ejecutable previo: {e}")
+                logger.debug(f"Could not close previous executable: {e}")
             self.pm.launch_fake_executable(exe)
 
         self.pm.forced_game = {
@@ -369,7 +372,7 @@ class SystemTrayIcon(QSystemTrayIcon):
             "executable_path": exe
         }
         self.pm.last_game = dict(self.pm.forced_game)
-        logger.info(f"🎮 Juego forzado activado: {name} (id={cid})")
+        logger.info(f"🎮 Forced game activated: {name} (id={cid})")
         
         self.showMessage("OK", f"{TEXTS.get('tray_forced_game', 'Forced game')}: {name}", QSystemTrayIcon.Information, 3000)
         self.update_menu()
@@ -389,9 +392,17 @@ class SystemTrayIcon(QSystemTrayIcon):
         AppLauncher.launch_geforce_now()
 
     def open_logs(self):
-        import os
         if LOG_FILE.exists():
-            os.startfile(LOG_FILE)
+            try:
+                if IS_WINDOWS:
+                    os.startfile(LOG_FILE)
+                elif IS_LINUX:
+                    subprocess.Popen(['xdg-open', str(LOG_FILE)])
+                elif IS_MACOS:
+                    subprocess.Popen(['open', str(LOG_FILE)])
+            except Exception as e:
+                logger.error(f"Could not open log file: {e}")
+                self.showMessage(TEXTS.get("logs_title", "Logs"), f"Log: {LOG_FILE}", QSystemTrayIcon.Information, 5000)
         else:
             self.showMessage(TEXTS.get("logs_title", "Logs"), TEXTS.get("open_logs_error", "No log file found."), QSystemTrayIcon.Warning, 3000)
 
@@ -402,7 +413,7 @@ class SystemTrayIcon(QSystemTrayIcon):
     def open_custom_presence_dialog(self):
         game = self.pm.forced_game or self.pm.last_game
         if not game:
-            self.showMessage("Error", "No hay juego activo.", QSystemTrayIcon.Warning)
+            self.showMessage("Error", "No active game.", QSystemTrayIcon.Warning)
             return
             
         name = game.get("name", "Unknown")
@@ -410,7 +421,7 @@ class SystemTrayIcon(QSystemTrayIcon):
         dlg = CustomPresenceDialog(name, game, parent=None)
         if dlg.exec_() == QDialog.Accepted and dlg.result_data:
             self.pm.set_custom_presence(dlg.result_data)
-            self.showMessage("Custom Presence", f"Presencia actualizada para {name}", QSystemTrayIcon.Information, 2000)
+            self.showMessage("Custom Presence", f"Presence updated for {name}", QSystemTrayIcon.Information, 2000)
 
     def on_match_selection_requested(self, game_key, candidates):
         # This is called from PresenceManager when it finds a new game and needs user input
@@ -428,9 +439,9 @@ class SystemTrayIcon(QSystemTrayIcon):
                 self._download_progress_dlg.deleteLater()
                 self._download_progress_dlg = None
             return
-
+ 
         if not getattr(self, '_download_progress_dlg', None):
-            self._download_progress_dlg = QProgressDialog("Descargando lista de juegos...", "Cancelar", 0, total if total > 0 else 0, None)
+            self._download_progress_dlg = QProgressDialog("Downloading games list...", "Cancel", 0, total if total > 0 else 0, None)
             self._download_progress_dlg.setStyleSheet(GAMING_STYLESHEET)
             self._download_progress_dlg.setWindowModality(Qt.WindowModal)
             self._download_progress_dlg.setMinimumDuration(1500) # Solo mostrar si la descarga toma mas de 1.5s
@@ -448,11 +459,11 @@ class SystemTrayIcon(QSystemTrayIcon):
                     return f"{sz / 1024:.1f} KB"
                 return f"{sz / 1024 / 1024:.2f} MB"
                 
-            msg = f"Descargando lista de juegos... ({fmt(current)} / {fmt(total)})" if total > 0 else f"Descargando lista de juegos... ({fmt(current)})"
+            msg = f"Downloading games list... ({fmt(current)} / {fmt(total)})" if total > 0 else f"Downloading games list... ({fmt(current)})"
             self._download_progress_dlg.setLabelText(msg)
             QApplication.processEvents()
             
-            if self._download_progress_dlg.wasCanceled():
+            if self._download_progress_dlg and self._download_progress_dlg.wasCanceled():
                 self._download_progress_dlg.close()
                 self._download_progress_dlg.deleteLater()
                 self._download_progress_dlg = None
@@ -463,13 +474,13 @@ class SystemTrayIcon(QSystemTrayIcon):
         
         if status["status"] == "FRESH":
             hours = status["hours"]
-            msg = f"El archivo de caché se actualizó hace {hours:.1f} horas.\n¿Desea actualizarlo nuevamente?"
-            if GamingMessageBox.show_question(None, "Sincronizar Juegos", msg):
+            msg = f"The cache file was updated {hours:.1f} hours ago.\nDo you want to update it again?"
+            if GamingMessageBox.show_question(None, "Sync Games", msg):
                 force = True
             # If No, we proceed with force=False (just local matching)
         
         # Create Progress Dialog
-        self.progress = QProgressDialog("Sincronizando juegos...", "Cancelar", 0, 100, None)
+        self.progress = QProgressDialog("Syncing games...", "Cancel", 0, 100, None)
         self.progress.setStyleSheet(GAMING_STYLESHEET)
         self.progress.setWindowModality(Qt.WindowModal)
         self.progress.setMinimumDuration(0)
@@ -493,27 +504,27 @@ class SystemTrayIcon(QSystemTrayIcon):
         threading.Thread(target=self.pm.sync_missing_game_details, args=(force,), daemon=True).start()
 
     def on_sync_canceled(self):
-        logger.info("Solicitando cancelación de sincronización...")
+        logger.info("Requesting sync cancellation...")
         self.pm.cancel_sync()
 
     def on_sync_progress(self, current, total, updated, eta_str):
         if getattr(self, 'progress', None):
             self.progress.setMaximum(total)
             self.progress.setValue(current)
-            self.progress.setLabelText(f"Sincronizando juegos...\nRevisados: {current}/{total} - Nuevos/Actualizados: {updated}\nTiempo restante: {eta_str}")
+            self.progress.setLabelText(f"Syncing games...\nChecked: {current}/{total} - New/Updated: {updated}\nRemaining time: {eta_str}")
 
     def on_sync_finished(self, updated, total):
         if getattr(self, 'progress', None):
             self.progress.close()
             self.progress = None
         
-        GamingMessageBox.show_info(None, "Sincronización Completada", f"Se han actualizado {updated} juegos de un total de {total} procesados.")
+        GamingMessageBox.show_info(None, "Sync Completed", f"Successfully updated {updated} games out of {total} processed.")
         
     def on_sync_error(self, error_msg):
         if getattr(self, 'progress', None):
             self.progress.close()
             self.progress = None
-        GamingMessageBox.show_warning(None, "Error de Sincronización", f"Ocurrió un error: {error_msg}")
+        GamingMessageBox.show_warning(None, "Sync Error", f"An error occurred: {error_msg}")
 
     def on_gfn_error_detected(self):
         if self._reinstaller_worker and self._reinstaller_worker.isRunning():
@@ -539,11 +550,11 @@ class SystemTrayIcon(QSystemTrayIcon):
         self._reinstaller_worker.start()
 
     def on_reinstall_started(self):
-        self.showMessage("GeForce NOW Error", "Recurso corrupto detectado. Reparando e instalando GFN...", QSystemTrayIcon.Information, 5000)
+        self.showMessage("GeForce NOW Error", "Corrupt resource detected. Repairing and installing GFN...", QSystemTrayIcon.Information, 5000)
 
     def on_reinstall_finished(self):
-        self.showMessage("GeForce NOW Reparado", "GeForce NOW se ha reinstalado correctamente.", QSystemTrayIcon.Information, 5000)
+        self.showMessage("GeForce NOW Repaired", "GeForce NOW has been successfully reinstalled.", QSystemTrayIcon.Information, 5000)
         AppLauncher.launch_geforce_now()
 
     def on_reinstall_error(self, err):
-        self.showMessage("Error de Reparación", f"No se pudo reinstalar GFN: {err}", QSystemTrayIcon.Warning, 5000)
+        self.showMessage("Repair Error", f"Could not reinstall GFN: {err}", QSystemTrayIcon.Warning, 5000)
