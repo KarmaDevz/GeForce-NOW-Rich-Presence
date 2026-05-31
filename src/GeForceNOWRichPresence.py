@@ -147,8 +147,17 @@ def main():
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--delay", type=int, default=0, help="Delay startup by N seconds")
+    parser.add_argument("--diagnose", action="store_true", help="Print Linux Discord/GFN diagnostics and exit")
     args, unknown = parser.parse_known_args()
     
+    if args.diagnose:
+        if sys.platform.startswith("linux"):
+            from src.core.linux_diagnostics import build_diagnostics
+            print(build_diagnostics())
+        else:
+            print("Diagnostics are currently only available on Linux.")
+        return
+
     if args.delay > 0:
         logger.info(f"Esperando {args.delay} segundos antes de iniciar...")
         time.sleep(args.delay)

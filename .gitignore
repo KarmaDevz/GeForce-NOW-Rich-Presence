@@ -1,5 +1,6 @@
 .env
 .venv*
+venv/
 __pycache__/
 *.pyc
 config/config_path.txt
