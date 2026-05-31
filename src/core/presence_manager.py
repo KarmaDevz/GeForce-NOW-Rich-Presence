@@ -24,6 +24,15 @@ from pypresence import Presence
 from src.core.utils import safe_json_load, save_json, CONFIG_DIR, BASE_DIR, DISCORD_CACHE_PATH, DISCORD_DETECTABLE_URL, DISCORD_CACHE_TTL, DISCORD_AUTO_APPLY_THRESHOLD, DISCORD_ASK_TIMEOUT, IS_WINDOWS, IS_MACOS, IS_LINUX, validate_discord_cache, download_from_github
 from src.core.steam_scraper import SteamScraper, find_steam_appid_by_name
 from src.core.cookie_manager import CookieManager
+from src.core.linux_gfn_log import game_from_native_log
+
+if IS_LINUX:
+    try:
+        from src.core.linux_window_detector import LinuxWindowDetector
+    except ImportError:
+        LinuxWindowDetector = None
+else:
+    LinuxWindowDetector = None
 
 # Import win32 libs inside methods or here if safe
 if IS_WINDOWS:
@@ -89,6 +98,12 @@ class PresenceManager(QObject):
 
         self._force_stop_time = 0
         self.current_game_start_time = None
+        self._linux_detector = None
+        if IS_LINUX and LinuxWindowDetector is not None:
+            try:
+                self._linux_detector = LinuxWindowDetector()
+            except Exception as e:
+                logger.warning(f"Linux window detector could not be started: {e}")
         
         self.cleanup_all_fake_processes() # Clean startup
 
@@ -380,8 +395,7 @@ class PresenceManager(QObject):
                 except Exception as e:
                     err_str = str(e)
                     if "Could not find Discord" in err_str or "Discord installed and running" in err_str:
-                        logger.error(f"💨 No se pudo conectar a Discord RPC tras varios intentos. Relanzando Discord...")
-                        AppLauncher.launch_discord()
+                        logger.error("Discord RPC socket not found. Start Discord manually if you want Rich Presence.")
                     else:
                         logger.error(f"❌ Error conectando a Discord RPC: {e}")
                     self.rpc = None
@@ -1140,6 +1154,12 @@ class PresenceManager(QObject):
         else:
              logger.info(f"ℹ️ Usuario ignoró match Discord para '{game_key}'")
 
+    def _find_linux_game_from_native_logs(self):
+        game, path = game_from_native_log(self.games_map)
+        if path and not game:
+            logger.debug(f"Linux GFN native log found but no active stream: {path}")
+        return game
+
     def check_presence(self):
         try:
             self.check_quests() # Check optional quests
@@ -1243,37 +1263,35 @@ class PresenceManager(QObject):
                                 logger.debug(f"Error leyendo logs para fallback en macOS: {log_err}")
 
             elif IS_LINUX:
-                # Linux logic using xprop (assumes X11 for now)
-                # We could also try /proc, but window title usually needs X11/Wayland tools
-                try:
-                    # Check if xprop is available
-                    # We are looking for a window with property _NET_WM_NAME or WM_NAME
-                    # and class name (WM_CLASS) related to GeForceNOW (if it exists)
-                    # For now, let's try a generic approach if the user is running it via browser/electron
-                    
-                    # Alternative: use standard 'w' tool or similar if available, but xprop is standard-ish for X11
-                    
-                    # We will try to find a window with "GeForce NOW" in title
-                    # cmd: xprop -root _NET_ACTIVE_WINDOW
-                    # then get title
-                    
-                    # Simple approach: Check all windows (requires tools)
-                    # Better: rely on process name first?
-                    # GFN on linux is likely Chrome/Edge.
-                    
-                    # NOTE: Since GFN is web-based on Linux usually, detection might be tricky without a dedicated app.
-                    # If this is for a dedicated Electron wrapper, we assume process name matches.
-                    
-                    pass 
-                except Exception:
-                    pass
-                
-                # Placeholder for Linux title detection
-                # If running via Browser, title might be "GeForce NOW - Google Chrome"
-                pass
-            
+                if self._linux_detector:
+                    try:
+                        raw_title = self._linux_detector.get_gfn_window_title()
+                        if raw_title:
+                            game_name = self._linux_detector.extract_game_name(raw_title)
+                            if game_name:
+                                title = raw_title
+                                setattr(self, "_linux_game_name", game_name)
+                            else:
+                                log_game = self._find_linux_game_from_native_logs()
+                                if log_game:
+                                    title = f"{log_game} on GeForce NOW"
+                                    setattr(self, "_linux_game_name", log_game)
+                                else:
+                                    setattr(self, "_linux_game_name", None)
+                                    self.log_once("⚠️ GeForce NOW is open but game has not started (lobby/home)")
+                                    return None
+                        else:
+                            log_game = self._find_linux_game_from_native_logs()
+                            if log_game:
+                                title = f"{log_game} on GeForce NOW"
+                                setattr(self, "_linux_game_name", log_game)
+                            else:
+                                setattr(self, "_linux_game_name", None)
+                    except Exception as e:
+                        logger.debug(f"Linux window detection error: {e}")
+
             if not title:
-                self.log_once("⚠️ GeForce NOW no está abierto (o sin ventana activa)")
+                self.log_once("⚠️ GeForce NOW is not open (or no active window)")
                 return None
 
             last_title = getattr(self, "_last_window_title", None)
@@ -1290,14 +1308,19 @@ class PresenceManager(QObject):
                     self.gfn_error_detected.emit()
                 return None
 
-            clean = re.sub(r'\s*(en|on|in|via)?\s*GeForce\s*NOW.*$', '', title, flags=re.IGNORECASE).strip()
-            clean = re.sub(r'[®™]', '', clean).strip()
+            if IS_LINUX:
+                clean = getattr(self, "_linux_game_name", None)
+                if not clean:
+                    return None
+            else:
+                clean = re.sub(r'\s*(en|on|in|via)?\s*GeForce\s*NOW.*$', '', title, flags=re.IGNORECASE).strip()
+                clean = re.sub(r'[®™]', '', clean).strip()
+                if not clean:
+                    return None
             
             last_clean = getattr(self, "_last_clean_title", None)
             if clean != last_clean:
                 setattr(self, "_last_clean_title", clean)
-            if not clean:
-                return None
 
             appid = None 
             for game_name, info in self.games_map.items():

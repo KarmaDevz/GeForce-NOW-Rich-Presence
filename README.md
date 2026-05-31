@@ -51,6 +51,27 @@ Get up and running in less than a minute!
 
 ---
 
+## 🐧 Linux From Source
+
+Linux support requires Discord Desktop with a working Rich Presence IPC socket and a GeForce NOW window or native-app log source. Avoid Snap Discord for Rich Presence; use the official deb/apt Discord, Flatpak Discord with RPC permissions, or Vesktop with RPC enabled.
+
+The app does not start Discord or GeForce NOW unless the matching tray setting is enabled. Start Discord manually before launching the presence app.
+
+Run from source with:
+
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    PYTHONPATH=. python3 src/GeForceNOWRichPresence.py
+
+Run Linux diagnostics with:
+
+    PYTHONPATH=. python3 src/GeForceNOWRichPresence.py --diagnose
+
+For X11/XWayland window-title detection, install xdotool. On Wayland, the native GeForce NOW app is detected through CxNative_GeForceNOW.log; set GFN_LOG_PATH if that log lives in a custom location.
+
+---
+
 ## 🧠 How it Works
 
 The application runs quietly and efficiently in the background:

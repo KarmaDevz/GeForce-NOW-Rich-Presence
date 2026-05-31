@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QAction, QApplication, QMess
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog
-from src.core.utils import ASSETS_DIR, LOG_FILE, set_autostart_windows
+from src.core.utils import ASSETS_DIR, LOG_FILE, IS_LINUX, set_autostart_windows
 from src.core.app_launcher import AppLauncher
 from src.ui.dialogs import AskGameDialog, MatchSelectionDialog, GamingMessageBox, GamingInputDialog, QuestListDialog, CustomPresenceDialog, AboutDialog, GFNRepairDialog, GAMING_STYLESHEET
 from src.core.utils import get_lang_from_registry, load_locale
@@ -155,6 +155,11 @@ class SystemTrayIcon(QSystemTrayIcon):
         logs_action = QAction(TEXTS.get("tray_open_logs", "Open logs"), self.menu)
         logs_action.triggered.connect(self.open_logs)
         self.menu.addAction(logs_action)
+
+        if IS_LINUX:
+            diagnose_action = QAction("Linux Diagnostics", self.menu)
+            diagnose_action.triggered.connect(self.open_linux_diagnostics)
+            self.menu.addAction(diagnose_action)
 
         # About
         about_action = QAction(TEXTS.get("about", "About"), self.menu)
@@ -422,6 +427,14 @@ class SystemTrayIcon(QSystemTrayIcon):
     def open_about(self):
         dlg = AboutDialog()
         dlg.exec_()
+
+    def open_linux_diagnostics(self):
+        try:
+            from src.core.linux_diagnostics import build_diagnostics
+            GamingMessageBox.show_info(None, "Linux Diagnostics", build_diagnostics())
+        except Exception as e:
+            logger.error(f"Error running Linux diagnostics: {e}")
+            self.showMessage("Linux Diagnostics", str(e), QSystemTrayIcon.Warning, 5000)
 
     def open_custom_presence_dialog(self):
         game = self.pm.forced_game or self.pm.last_game
