@@ -1,4 +1,5 @@
 import logging
+import sys
 import threading
 import time
 from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QAction, QApplication, QMessageBox, QProgressDialog
@@ -81,6 +82,25 @@ class SystemTrayIcon(QSystemTrayIcon):
     def create_menu(self):
         self.menu.clear()
         
+        if sys.platform == "darwin":
+            # Open Logs
+            logs_action = QAction(TEXTS.get("tray_open_logs", "Open logs"), self.menu)
+            logs_action.triggered.connect(self.open_logs)
+            self.menu.addAction(logs_action)
+
+            # About
+            about_action = QAction(TEXTS.get("about", "About"), self.menu)
+            about_action.triggered.connect(self.open_about)
+            self.menu.addAction(about_action)
+            
+            self.menu.addSeparator()
+            
+            # Exit
+            exit_action = QAction(TEXTS.get("tray_exit", "Exit"), self.menu)
+            exit_action.triggered.connect(QApplication.instance().quit)
+            self.menu.addAction(exit_action)
+            return
+
         # Force Game
         force_text = TEXTS.get("tray_force_game", "Force game...")
         if self.pm.forced_game:
@@ -94,9 +114,10 @@ class SystemTrayIcon(QSystemTrayIcon):
         self.menu.addAction(force_action)
         
         # Obtain Cookie
-        cookie_action = QAction(TEXTS.get("tray_get_cookie", "Obtain Steam cookie"), self.menu)
-        cookie_action.triggered.connect(self.obtain_cookie)
-        self.menu.addAction(cookie_action)
+        if sys.platform != "darwin":
+            cookie_action = QAction(TEXTS.get("tray_get_cookie", "Obtain Steam cookie"), self.menu)
+            cookie_action.triggered.connect(self.obtain_cookie)
+            self.menu.addAction(cookie_action)
         
         # Open GeForce
         open_gf_action = QAction(TEXTS.get("tray_open_geforce", "Open GeForce NOW"), self.menu)
@@ -138,10 +159,11 @@ class SystemTrayIcon(QSystemTrayIcon):
         config_menu.addAction(start_discord_action)
 
         # 4. Obtener cookie al iniciar
-        start_cookie_action = QAction(TEXTS.get("config_get_cookie", "Obtener cookie al iniciar la aplicación"), self.menu, checkable=True)
-        start_cookie_action.setChecked(self.config_manager.get_setting("get_cookie_on_launch", True))
-        start_cookie_action.triggered.connect(lambda chk: self.config_manager.set_setting("get_cookie_on_launch", chk))
-        config_menu.addAction(start_cookie_action)
+        if sys.platform != "darwin":
+            start_cookie_action = QAction(TEXTS.get("config_get_cookie", "Obtener cookie al iniciar la aplicación"), self.menu, checkable=True)
+            start_cookie_action.setChecked(self.config_manager.get_setting("get_cookie_on_launch", True))
+            start_cookie_action.triggered.connect(lambda chk: self.config_manager.set_setting("get_cookie_on_launch", chk))
+            config_menu.addAction(start_cookie_action)
 
         self.menu.addSeparator()
 

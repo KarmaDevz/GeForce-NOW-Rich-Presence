@@ -50,8 +50,9 @@ class AppMonitor:
             if sys.platform == "win32":
                 AppMonitor.kill_process("dumb.exe")
             elif sys.platform == "darwin":
-                AppMonitor.kill_process("dumb")
-                AppMonitor.kill_process("dumb.app")
+                # AppMonitor.kill_process("dumb")
+                # AppMonitor.kill_process("dumb.app")
+                pass
 
     @staticmethod
     def launch_dumb(path_dumb: str):
@@ -60,7 +61,8 @@ class AppMonitor:
             subprocess.Popen([path_dumb])
             logger.info("🚀 dumb.exe iniciado.")
         elif sys.platform == "darwin":
-            AppMonitor.kill_process("dumb")
-            AppMonitor.kill_process("dumb.app")
-            subprocess.Popen(["open", "-n", "-a", path_dumb])
-            logger.info("🚀 dumb.app iniciado.")
+            # AppMonitor.kill_process("dumb")
+            # AppMonitor.kill_process("dumb.app")
+            # subprocess.Popen(["open", "-n", "-a", path_dumb])
+            # logger.info("🚀 dumb.app iniciado.")
+            pass

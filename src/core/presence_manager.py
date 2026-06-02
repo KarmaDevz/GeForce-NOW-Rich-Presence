@@ -531,16 +531,17 @@ class PresenceManager(QObject):
             
             # Prepare executable
             if IS_MACOS:
-                 dumb_path = BASE_DIR / "tools" / "dumb.app"
-                 if not dumb_path.exists():
-                     logger.warning("⚠️ dumb.app no encontrado en tools/ (no compilado aún). Se omitirá la Quest en macOS.")
-                     return None
-                 
-                 if exec_full_path.exists():
-                     shutil.rmtree(exec_full_path)
-                 
-                 exec_full_path.parent.mkdir(parents=True, exist_ok=True)
-                 shutil.copytree(dumb_path, exec_full_path)
+                # Reuse MacOS logic from launch_fake_executable roughly
+                 # dumb_path = BASE_DIR / "tools" / "dumb.app"
+                 # if exec_full_path.exists():
+                 #     shutil.rmtree(exec_full_path)
+                 # 
+                 # exec_full_path.parent.mkdir(parents=True, exist_ok=True)
+                 # 
+                 # if dumb_path.exists():
+                 #     shutil.copytree(dumb_path, exec_full_path)
+                 logger.info("ℹ️ Bypassed quest fake app copy on macOS (darwin)")
+                 pass
             else:
                  dumb_path = BASE_DIR / "tools" / "dumb.exe"
                  if not dumb_path.exists():
@@ -576,11 +577,13 @@ class PresenceManager(QObject):
             
             proc = None
             if IS_MACOS:
-                proc = subprocess.Popen(["open", "-n", "-a", str(exec_full_path)])
+                # proc = subprocess.Popen(["open", "-n", "-a", str(exec_full_path)])
                 # On MacOS `open` returns immediately and doesn't give us the PID of the app easily.
                 # `launch_fake_executable` stores `proc` but `open` process exits.
                 # Identifying the process on Mac for kill is harder.
                 # For now let's focus on Windows/Linux or assume we can find it by name.
+                logger.info("ℹ️ Bypassed quest fake app launch on macOS (darwin)")
+                pass
             else:
                 proc = subprocess.Popen([str(exec_full_path)], cwd=str(exec_full_path.parent))
             
@@ -688,33 +691,35 @@ class PresenceManager(QObject):
                 # The user said: "el fake exe ya lo compilé en mac y ahora es .app"
                 # Let's assume we have a "dumb.app" in tools/ similar to "dumb.exe"
                 
-                app_name = Path(executable_path).name
-                if not app_name.endswith(".app"):
-                    # If discord asks for "game.exe", we might want to map it to "game.app" or just use a generic "FakeGame.app"
-                    # For simplicity, let's copy our generic dumb.app to "FakeGame.app"
-                    app_name = "FakeGame.app"
-                
-                exec_full_path = temp_dir / app_name
-                
-                # Clean previous if exists
-                if exec_full_path.exists():
-                    shutil.rmtree(exec_full_path)
-                
-                exec_full_path.parent.mkdir(parents=True, exist_ok=True)
-                
-                dumb_path = BASE_DIR / "tools" / "dumb.app"
-                if not dumb_path.exists():
-                     logger.warning("⚠️ dumb.app no encontrado en tools/ (no compilado aún). Se omitirá iniciar el ejecutable falso en macOS.")
-                     return
- 
-                # Copy .app bundle
-                shutil.copytree(dumb_path, exec_full_path)
-                
-                logger.info(f"🚀 Ejecutando fake app: {exec_full_path}")
-                # Open the app using 'open' command
-                proc = subprocess.Popen(["open", "-n", "-a", str(exec_full_path)])
-                self.fake_proc = proc
-                self.fake_exec_path = exec_full_path
+                # app_name = Path(executable_path).name
+                # if not app_name.endswith(".app"):
+                #     # If discord asks for "game.exe", we might want to map it to "game.app" or just use a generic "FakeGame.app"
+                #     # For simplicity, let's copy our generic dumb.app to "FakeGame.app"
+                #     app_name = "FakeGame.app"
+                # 
+                # exec_full_path = temp_dir / app_name
+                # 
+                # # Clean previous if exists
+                # if exec_full_path.exists():
+                #     shutil.rmtree(exec_full_path)
+                # 
+                # exec_full_path.parent.mkdir(parents=True, exist_ok=True)
+                # 
+                # dumb_path = BASE_DIR / "tools" / "dumb.app"
+                # if not dumb_path.exists():
+                #      logger.error(f"❌ dumb.app no encontrado en {dumb_path}")
+                #      return
+                #  
+                # # Copy .app bundle
+                # shutil.copytree(dumb_path, exec_full_path)
+                # 
+                # logger.info(f"🚀 Ejecutando fake app: {exec_full_path}")
+                # # Open the app using 'open' command
+                # proc = subprocess.Popen(["open", "-n", "-a", str(exec_full_path)])
+                # self.fake_proc = proc
+                # self.fake_exec_path = exec_full_path
+                logger.info("ℹ️ Bypassed fake app execution on macOS (darwin)")
+                pass
                 
             else:
                 # Windows and Linux logic

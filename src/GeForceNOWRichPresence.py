@@ -183,15 +183,15 @@ def main():
     exception_signaler.exception_caught.connect(show_crash_dialog_slot)
 
     # 5. Check for Updates
-    updater = Updater()
-    updater.check_for_updates(silent=True)
+    if sys.platform != "darwin":
+        updater = Updater()
+        updater.check_for_updates(silent=True)
 
     # 6. Initialize Managers First (moved up so we can read settings)
     config_manager = ConfigManager(CONFIG_DIR / "config_path.txt")
 
     if config_manager.get_setting("start_with_windows", False):
         try:
-            # pyrefly: ignore [missing-import]
             import winshell
             app_name = "GeForceNOWRichPresence"
             shortcut_path = os.path.join(winshell.startup(), f"{app_name}.lnk")
@@ -233,7 +233,7 @@ def main():
     main_presence_manager = presence_manager
 
     # 6.1 Optional Cookie Fetch
-    if config_manager.get_setting("get_cookie_on_launch", True):
+    if sys.platform != "darwin" and config_manager.get_setting("get_cookie_on_launch", True):
         logger.info("Intentando obtener cookie de Steam al inicio (según configuración)...")
         cookie = cookie_manager.get_steam_cookie(confirm_callback=None)
         if cookie:
