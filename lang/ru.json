@@ -134,5 +134,17 @@
     "copied": "Скопировано!",
     "config_show_lobby": "Показывать статус GeForce NOW, когда нет активных игр",
     "lobby_status": "В главном меню",
-    "play_on_gfn": "Играть в GeForce NOW"
+    "play_on_gfn": "Играть в GeForce NOW",
+    "status_disconnected": "Отключено",
+    "status_active": "Активно: {game}",
+    "status_forced": "Принудительно: {game}",
+    "status_searching": "Поиск игры...",
+    "tray_sec_quick_action": "Быстрое действие",
+    "tray_sec_custom_presence": "Кастомный статус",
+    "tray_sec_tools": "Инструменты",
+    "tray_tools_logs": "Посмотреть журнал",
+    "tray_tools_integrity": "Проверить целостность",
+    "tray_about": "О программе",
+    "tray_discord_invite_gfn": "Войти на сервер GeForce NOW",
+    "tray_open_gfn": "Открыть GeForce NOW"
 }
