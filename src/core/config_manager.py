@@ -1,13 +1,14 @@
 import logging
 from pathlib import Path
 from typing import Dict, Optional
-from src.core.utils import safe_json_load, save_json, CONFIG_DIR
+from src.core.utils import safe_json_load, save_json, CONFIG_DIR, USER_DATA_DIR
 from src.core.utils import get_lang_from_registry, load_locale
 
 try:
     LANG = get_lang_from_registry()
     TEXTS = load_locale(LANG)
 except Exception:
+    import os
     LANG = os.getenv('GEFORCE_LANG', 'en')
     TEXTS = load_locale(LANG)
 
@@ -26,13 +27,24 @@ class ConfigManager:
             "get_cookie_on_launch": False,
             "show_lobby_status": True
         }
-        self.app_settings_path = CONFIG_DIR / "app_settings.json"
+        self.app_settings_path = USER_DATA_DIR / "app_settings.json"
         self._load()
     def _load(self):
         # Ruta fija al archivo que siempre queremos cargar
         fixed_path = CONFIG_DIR / "games_config_merged.json"
         backup_path = CONFIG_DIR / "games_config_merged_backup.json"
         
+        # Migrate app_settings.json from legacy CONFIG_DIR if not present in USER_DATA_DIR
+        if not self.app_settings_path.exists():
+            legacy_path = CONFIG_DIR / "app_settings.json"
+            if legacy_path.exists():
+                try:
+                    import shutil
+                    shutil.copy2(str(legacy_path), str(self.app_settings_path))
+                    logger.info("Migrated app_settings.json from legacy CONFIG_DIR to USER_DATA_DIR.")
+                except Exception as e:
+                    logger.error(f"Failed to migrate legacy app_settings.json: {e}")
+
         # Cargar app_settings.json
         if self.app_settings_path.exists():
             data_settings = safe_json_load(self.app_settings_path)

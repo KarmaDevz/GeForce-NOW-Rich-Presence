@@ -162,14 +162,26 @@ class CustomMenuItemWidget(QFrame):
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.clicked.emit()
+            # Retrieve and close the parent menu first while the widget is still valid
             p = self.parent()
+            parent_menu = None
             while p:
                 if isinstance(p, QMenu):
-                    p.close()
+                    parent_menu = p
                     break
                 p = p.parent()
-        super().mouseReleaseEvent(event)
+            
+            if parent_menu:
+                parent_menu.close()
+            
+            # Call super mouseReleaseEvent to propagate the event safely
+            super().mouseReleaseEvent(event)
+            
+            # Emit clicked signal. Note that slot handlers may delete this widget,
+            # so do not access self or call methods after this point.
+            self.clicked.emit()
+        else:
+            super().mouseReleaseEvent(event)
 
 class CustomMenuItemAction(QWidgetAction):
     def __init__(self, text, icon_name, right_icon_name=None, is_danger=False, parent=None):

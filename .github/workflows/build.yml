@@ -34,6 +34,21 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
+      - name: Sync version.py with git tag
+        run: |
+          import os
+          import re
+          ref_type = os.environ.get('GITHUB_REF_TYPE', '')
+          ref = os.environ.get('GITHUB_REF_NAME', '')
+          if ref_type == 'tag' and ref and re.match(r'^v?\d+\.\d+\.\d+$', ref):
+              ver = ref if ref.startswith('v') else f'v{ref}'
+              with open('src/version.py', 'w') as f:
+                  f.write(f'VERSION = "{ver}"\n')
+              print(f"Synced version.py with tag: {ver}")
+          else:
+              print(f"Skipping version sync for ref: {ref} (Type: {ref_type})")
+        shell: python
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

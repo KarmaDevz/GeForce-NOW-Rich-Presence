@@ -14,3 +14,4 @@ mejoras_pendientes.txt
 innosetup.txt
 compile.txt
 config/*_backup.json
+config/app_settings.json

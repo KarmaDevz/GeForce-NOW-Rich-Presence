@@ -331,6 +331,24 @@ class UpdateDialog(QDialog):
         self.reject()
 
     def start_download(self):
+        if getattr(sys, "frozen", False):
+            install_dir = Path(sys.executable).parent
+            try:
+                test_file = install_dir / ".write_test"
+                test_file.write_text("test")
+                test_file.unlink()
+            except Exception as e:
+                logger.error(f"No write permissions in install directory: {e}")
+                from src.ui.dialogs import GamingMessageBox
+                GamingMessageBox.show_warning(
+                    self, 
+                    t.get("error_title", "Error"), 
+                    t.get("permission_error_message", "No se tienen permisos de escritura en la carpeta de instalación. Intente ejecutar la aplicación como administrador o realice la actualización manualmente.")
+                )
+                self.btn_update.setEnabled(True)
+                self.btn_cancel.setEnabled(True)
+                return
+
         self.btn_update.setEnabled(False)
         self.btn_cancel.setEnabled(False)
         self.progress_bar.setVisible(True)
@@ -348,20 +366,46 @@ class UpdateDialog(QDialog):
             
             if installer_path.lower().endswith(".zip") or installer_path.lower().endswith(".tar.gz"):
                 if getattr(sys, "frozen", False):
-                    from src.core.utils import IS_WINDOWS, IS_MACOS, IS_LINUX
+                    from src.core.utils import IS_WINDOWS, IS_MACOS, IS_LINUX, USER_DATA_DIR
                     pid = os.getpid()
                     archive_path = str(installer_path)
                     install_dir = str(Path(sys.executable).parent)
                     exe_path = str(sys.executable)
+                    flag_path = str(USER_DATA_DIR / "update_failed.json")
+                    version_str = str(self.version)
                     
                     if IS_WINDOWS:
                         # PowerShell auto-update for Windows
                         powershell_cmd = (
                             f"Start-Sleep -Seconds 1; "
                             f"while (Get-Process -Id {pid} -ErrorAction SilentlyContinue) {{ Start-Sleep -Milliseconds 100 }}; "
-                            f"Expand-Archive -Path '{archive_path}' -DestinationPath '{install_dir}' -Force; "
-                            f"Remove-Item -Path '{archive_path}' -Force; "
-                            f"Start-Process -FilePath '{exe_path}'"
+                            f"$temp_extract = Join-Path $env:TEMP ([Guid]::NewGuid().ToString()); "
+                            f"$success = $true; "
+                            f"try {{ "
+                            f"  Expand-Archive -Path '{archive_path}' -DestinationPath $temp_extract -Force; "
+                            f"  if (-not (Test-Path (Join-Path $temp_extract 'GeForceNOWRichPresence.exe'))) {{ "
+                            f"    throw 'El archivo extraido no contiene GeForceNOWRichPresence.exe'; "
+                            f"  }} "
+                            f"  Remove-Item -Path '{install_dir}\\_internal' -Recurse -Force -ErrorAction SilentlyContinue; "
+                            f"  Remove-Item -Path '{install_dir}\\lang' -Recurse -Force -ErrorAction SilentlyContinue; "
+                            f"  Move-Item -Path \"$temp_extract\\*\" -Destination '{install_dir}' -Force; "
+                            f"  Remove-Item -Path '{archive_path}' -Force; "
+                            f"}} catch {{ "
+                            f"  $success = $false; "
+                            f"  [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; "
+                            f"  [System.Windows.Forms.MessageBox]::Show('No se pudieron reemplazar los archivos de la aplicación debido a un error de escritura o falta de permisos.`n`nDetalle: ' + $_.Exception.Message, 'Error de Actualización', 0, 16); "
+                            f"  $json = @{{ "
+                            f"    timestamp = [double](Get-Date -UFormat %s); "
+                            f"    version = '{version_str}'; "
+                            f"    error = $_.Exception.Message; "
+                            f"  }} | ConvertTo-Json; "
+                            f"  Set-Content -Path '{flag_path}' -Value $json; "
+                            f"}} finally {{ "
+                            f"  Remove-Item -Path $temp_extract -Recurse -Force -ErrorAction SilentlyContinue; "
+                            f"}}; "
+                            f"if ($success) {{ "
+                            f"  Start-Process -FilePath '{exe_path}'"
+                            f"}}"
                         )
                         logger.info(f"Ejecutando auto-actualizador silencioso en segundo plano (Windows): {powershell_cmd}")
                         subprocess.Popen(
@@ -375,9 +419,18 @@ class UpdateDialog(QDialog):
                         bash_cmd = (
                             f"sleep 1; "
                             f"while kill -0 {pid} 2>/dev/null; do sleep 0.1; done; "
-                            f"unzip -o '{archive_path}' -d '{install_dir}'; "
-                            f"rm '{archive_path}'; "
-                            f"open '{exe_path}'"
+                            f"temp_extract=$(mktemp -d); "
+                            f"if unzip -o '{archive_path}' -d \"$temp_extract\" && [ -f \"$temp_extract/GeForceNOWRichPresence\" ]; then "
+                            f"  rm -rf '{install_dir}/_internal' '{install_dir}/lang'; "
+                            f"  cp -R \"$temp_extract\"/* '{install_dir}/'; "
+                            f"  rm -f '{archive_path}'; "
+                            f"  rm -rf \"$temp_extract\"; "
+                            f"  open '{exe_path}'; "
+                            f"else "
+                            f"  osascript -e 'display alert \"Error de Actualización\" message \"No se pudieron reemplazar los archivos de la aplicación por falta de permisos o error de descompresión.\"'; "
+                            f"  echo \"{{\\\"timestamp\\\": $(date +%s), \\\"version\\\": \\\"{version_str}\\\", \\\"error\\\": \\\"Extraction failed on macOS\\\"}}\" > '{flag_path}'; "
+                            f"  rm -rf \"$temp_extract\"; "
+                            f"fi"
                         )
                         logger.info(f"Ejecutando auto-actualizador silencioso en segundo plano (macOS): {bash_cmd}")
                         subprocess.Popen(["bash", "-c", bash_cmd])
@@ -388,10 +441,20 @@ class UpdateDialog(QDialog):
                         bash_cmd = (
                             f"sleep 1; "
                             f"while kill -0 {pid} 2>/dev/null; do sleep 0.1; done; "
-                            f"tar -xzf '{archive_path}' -C '{install_dir}'; "
-                            f"rm '{archive_path}'; "
-                            f"chmod +x '{exe_path}'; "
-                            f"'{exe_path}' &"
+                            f"temp_extract=$(mktemp -d); "
+                            f"if tar -xzf '{archive_path}' -C \"$temp_extract\" && [ -f \"$temp_extract/GeForceNOWRichPresence\" ]; then "
+                            f"  rm -rf '{install_dir}/_internal' '{install_dir}/lang'; "
+                            f"  cp -R \"$temp_extract\"/* '{install_dir}/'; "
+                            f"  rm -f '{archive_path}'; "
+                            f"  rm -rf \"$temp_extract\"; "
+                            f"  chmod +x '{exe_path}'; "
+                            f"  '{exe_path}' & "
+                            f"else "
+                            f"  zenity --error --text=\"No se pudieron reemplazar los archivos de la aplicación por falta de permisos o error de descompresión.\" 2>/dev/null || "
+                            f"  kdialog --error \"No se pudieron reemplazar los archivos de la aplicación por falta de permisos o error de descompresión.\" 2>/dev/null; "
+                            f"  echo \"{{\\\"timestamp\\\": $(date +%s), \\\"version\\\": \\\"{version_str}\\\", \\\"error\\\": \\\"Extraction failed on Linux\\\"}}\" > '{flag_path}'; "
+                            f"  rm -rf \"$temp_extract\"; "
+                            f"fi"
                         )
                         logger.info(f"Ejecutando auto-actualizador silencioso en segundo plano (Linux): {bash_cmd}")
                         subprocess.Popen(["bash", "-c", bash_cmd])
@@ -432,9 +495,28 @@ class Updater(QObject):
         self.active_dialog = None
 
     def check_for_updates(self, silent=True):
+        if silent:
+            from src.core.utils import USER_DATA_DIR, safe_json_load
+            flag_file = USER_DATA_DIR / "update_failed.json"
+            if flag_file.exists():
+                data = safe_json_load(flag_file)
+                err_detail = ""
+                if data and isinstance(data, dict):
+                    err_detail = f" (Versión: {data.get('version', 'unknown')}, Error: {data.get('error', 'unknown')})"
+                logger.warning(f"La última actualización falló{err_detail}. Se omitirá la comprobación de actualizaciones automática en esta sesión.")
+                try:
+                    flag_file.unlink()
+                except Exception as e:
+                    logger.error(f"No se pudo eliminar el archivo de registro de fallo: {e}")
+                self.checking_updates = False
+                self.update_available = False
+                self.update_status_changed.emit()
+                return
+
         if self.checking_updates:
             logger.info("Comprobación de actualizaciones ya en curso. Ignorando nueva solicitud.")
             return
+
         self.checking_updates = True
         self.worker = UpdateWorker(mode="check")
         self.worker.check_finished.connect(lambda has_update, ver, url, notes: self.on_check_finished(has_update, ver, url, notes, silent))

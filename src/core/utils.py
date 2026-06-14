@@ -54,6 +54,16 @@ DISCORD_AUTO_APPLY_THRESHOLD = 0.85
 DISCORD_ASK_TIMEOUT = 10
 LOCK_FILE = Path(tempfile.gettempdir()) / "geforce_presence.lock"
 
+# User-specific persistent data directory
+if IS_WINDOWS:
+    _appdata = Path(os.getenv("APPDATA", Path.home() / "AppData" / "Roaming"))
+elif IS_MACOS:
+    _appdata = Path.home() / "Library" / "Application Support"
+else:
+    _appdata = Path.home() / ".config"
+USER_DATA_DIR = _appdata / "geforce_presence"
+USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 def get_lang_from_registry(default="en"):
     if IS_WINDOWS:
         try:

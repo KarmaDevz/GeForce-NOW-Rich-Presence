@@ -3,6 +3,7 @@ import time
 import logging
 import requests
 import psutil
+import subprocess
 from pathlib import Path
 from typing import Optional, Callable, Dict, Tuple
 
@@ -102,6 +103,66 @@ class CookieManager:
         else:
             logger.debug(f"No había procesos de {browser} en ejecución.")
 
+    def has_visible_windows(self, browser: str) -> bool:
+        """Comprueba si el navegador especificado tiene ventanas visibles abiertas."""
+        proc_name = "msedge.exe" if browser.lower() == "edge" else "chrome.exe"
+        pids = set()
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                if proc.info['name'] and proc_name in proc.info['name'].lower():
+                    pids.add(proc.info['pid'])
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+                
+        if not pids:
+            return False
+            
+        if IS_WINDOWS:
+            try:
+                import win32gui
+                import win32process
+            except ImportError:
+                return True
+                
+            visible_windows = []
+            def enum_windows_callback(hwnd, extra):
+                if win32gui.IsWindowVisible(hwnd):
+                    title = win32gui.GetWindowText(hwnd)
+                    if title:
+                        _, win_pid = win32process.GetWindowThreadProcessId(hwnd)
+                        if win_pid in pids:
+                            visible_windows.append(hwnd)
+                return True
+            try:
+                win32gui.EnumWindows(enum_windows_callback, None)
+                return len(visible_windows) > 0
+            except Exception as e:
+                logger.debug(f"Error enumerando ventanas en Windows: {e}")
+                return True
+                
+        elif IS_MACOS:
+            app_name = "Microsoft Edge" if browser.lower() == "edge" else "Google Chrome"
+            script = f'''
+            tell application "System Events"
+                if exists process "{app_name}" then
+                    tell application "{app_name}" to get count of windows
+                else
+                    return 0
+                end if
+            end tell
+            '''
+            try:
+                result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    count = int(result.stdout.strip())
+                    return count > 0
+            except Exception as e:
+                logger.debug(f"Error comprobando ventanas en macOS: {e}")
+            return True
+            
+        else:
+            return True
+
     def get_cookie_with_selenium(self, 
                                  browser: str = "edge",
                                  headless: bool = False, 
@@ -111,24 +172,31 @@ class CookieManager:
         try:
             # Check if browser is running
             proc_name = "msedge.exe" if browser.lower() == "edge" else "chrome.exe"
-            browser_running = any(
-                (p.info['name'] and proc_name in p.info['name'].lower())
-                for p in psutil.process_iter(['name'])
-            )
+            pids = set()
+            for proc in psutil.process_iter(['pid', 'name']):
+                try:
+                    if proc.info['name'] and proc_name in proc.info['name'].lower():
+                        pids.add(proc.info['pid'])
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+
+            browser_running = len(pids) > 0
 
             if browser_running:
-                if confirm_callback:
-                    browser_display = "Microsoft Edge" if browser.lower() == "edge" else "Google Chrome"
-                    res = confirm_callback(
-                        self.texts.get("edge_open", f"{browser_display} está abierto"), 
-                        self.texts.get('edge_open_confirm', f"{browser_display} needs to be closed to proceed. Close it?")
-                    )
-                    if not res:
-                        logger.info(f"⏭️ Usuario canceló la obtención de cookie porque {browser_display} estaba abierto.")
+                has_window = self.has_visible_windows(browser)
+                if has_window:
+                    if confirm_callback:
+                        browser_display = "Microsoft Edge" if browser.lower() == "edge" else "Google Chrome"
+                        res = confirm_callback(
+                            self.texts.get("edge_open", f"{browser_display} está abierto"), 
+                            self.texts.get('edge_open_confirm', f"{browser_display} needs to be closed to proceed. Close it?")
+                        )
+                        if not res:
+                            logger.info(f"⏭️ Usuario canceló la obtención de cookie porque {browser_display} estaba abierto.")
+                            return None
+                    else:
+                        logger.info(f"{browser} is running with a window and no callback provided to confirm close.")
                         return None
-                else:
-                    logger.info(f"{browser} is running and no callback provided to confirm close.")
-                    return None
 
                 self.close_browser_processes(browser)
                 time.sleep(2)
