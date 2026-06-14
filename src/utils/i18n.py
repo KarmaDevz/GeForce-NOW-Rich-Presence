@@ -30,6 +30,8 @@ def get_lang_from_registry(default="en"):
 
         if "spanish" in lang.lower():
             return "es"
+        elif "russian" in lang.lower():
+            return "ru"
         elif "english" in lang.lower():
             return "en"
         else:

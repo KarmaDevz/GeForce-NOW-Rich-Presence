@@ -31,13 +31,18 @@ Name: "desktopicon"; Description: "Create desktop shortcut"; Flags: unchecked
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"; LicenseFile: "LICENSE.txt"
-Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"; LicenseFile: "LICENSE_es.txt"
+Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"; LicenseFile: "LICENCE_es"
+Name: "russian"; MessagesFile: "compiler:Languages\Russian.isl"; LicenseFile: "LICENCE_ru"
 
 [Files]
 Source: "GeForceNOWRichPresence.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "_internal\*"; DestDir: "{app}\_internal"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; copiar también la carpeta locales con en.json, es.json, etc.
 Source: "_internal\lang\*"; DestDir: "{app}\lang"; Flags: ignoreversion recursesubdirs createallsubdirs
+; copiar archivos de licencia para diferentes idiomas
+Source: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "LICENCE_es"; DestDir: "{app}"; Flags: ignoreversion
+Source: "LICENCE_ru"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Acceso directo en menú inicio
@@ -61,10 +66,13 @@ Flags: nowait postinstall skipifsilent
 [CustomMessages]
 english.FinishedSupport=Thanks for using GeForce Presence! Consider supporting this application ^_^
 spanish.FinishedSupport=¡Gracias por usar GeForce Presence! Considera apoyar esta aplicación ^_^
+russian.FinishedSupport=Спасибо за использование GeForce Presence! Подумайте о поддержке этого приложения ^_^
 english.Donate=💖 Donate
 spanish.Donate=💖 Donar
+russian.Donate=💖 Пожертвовать
 english.Star=⭐ Star on GitHub
 spanish.Star=⭐ Dar estrella en GitHub
+russian.Star=⭐ Звезда на GitHub
 
 [InstallDelete]
 Type: filesandordirs; Name: "{app}\_internal"

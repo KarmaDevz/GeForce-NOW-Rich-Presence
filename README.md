@@ -6,7 +6,7 @@
     <strong>Show your real game on Discord while playing on GeForce NOW — automatically and beautifully.</strong>
   </p>
   
-  [🇪🇸 Leer en Español](./README.es.md) • [📥 Download Latest](#-installation) • [💬 Support](#-about--support)
+  [🇪🇸 Leer en Español](./README.es.md) • [🇷🇺 На русском](./README.ru.md) • [📥 Download Latest](#-installation) • [💬 Support](#-about--support)
   
   <br/>
 

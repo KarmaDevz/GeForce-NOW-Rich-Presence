@@ -101,6 +101,8 @@ def _normalize_lang(lang_str: str, default: str) -> str:
     lang_str = lang_str.lower()
     if "spanish" in lang_str or "es" in lang_str:
         return "es"
+    elif "russian" in lang_str or "ru" in lang_str:
+        return "ru"
     elif "english" in lang_str or "en" in lang_str:
         return "en"
     return default

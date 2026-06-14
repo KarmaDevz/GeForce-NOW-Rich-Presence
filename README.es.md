@@ -6,7 +6,7 @@
     <strong>Muestra el juego que realmente estás jugando en Discord mientras usas GeForce NOW — automáticamente y con estilo.</strong>
   </p>
   
-  [🇺🇸 Read in English](./README.md) • [📥 Descargar Última Versión](#-instalación) • [💬 Soporte](#-acerca-de-y-soporte)
+  [🇺🇸 Read in English](./README.md) • [🇷🇺 На русском](./README.ru.md) • [📥 Descargar Última Versión](#-instalación) • [💬 Soporte](#-acerca-de-y-soporte)
   
   <br/>
 
