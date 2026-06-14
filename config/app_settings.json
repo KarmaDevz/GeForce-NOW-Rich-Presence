@@ -1,7 +1,0 @@
-{
-    "start_with_windows": false,
-    "start_gfn_on_launch": true,
-    "start_discord_on_launch": false,
-    "get_cookie_on_launch": false,
-    "show_lobby_status": true
-}
