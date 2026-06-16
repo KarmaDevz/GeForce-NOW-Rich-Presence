@@ -68,7 +68,8 @@ jobs:
           cd ../..
           # 2. Compile Inno Setup Installer
           cp LICENSE dist/GeForceNOWRichPresence/LICENSE.txt
-          cp LICENCE_es dist/GeForceNOWRichPresence/LICENSE_es.txt
+          cp LICENCE_es dist/GeForceNOWRichPresence/LICENCE_es
+          cp LICENCE_ru dist/GeForceNOWRichPresence/LICENCE_ru
           cp instalador.iss dist/GeForceNOWRichPresence/
           $raw_ver = "${{ github.ref_name }}"
           if ($raw_ver.StartsWith("v")) { $ver = $raw_ver.Substring(1) } else { $ver = $raw_ver }
