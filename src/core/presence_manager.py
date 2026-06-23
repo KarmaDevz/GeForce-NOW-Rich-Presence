@@ -598,6 +598,7 @@ class PresenceManager(QObject):
                 # For now let's focus on Windows/Linux or assume we can find it by name.
             else:
                 proc = subprocess.Popen([str(exec_full_path)], cwd=str(exec_full_path.parent))
+                self._rename_process_windows(proc.pid, game_name)
             
             # Store in active quests
             # Use timestamp as ID or something unique
@@ -693,7 +694,7 @@ class PresenceManager(QObject):
                         logger.info(f"⚠️ Proceso de Quest {data['name']} terminó inesperadamente.")
                         self.stop_quest_game(gid, keep_in_list=True)
 
-    def launch_fake_executable(self, executable_path: str):
+    def launch_fake_executable(self, executable_path: str, game_name: str = None):
         try:
             temp_dir = Path(tempfile.gettempdir()) / "discord_fake_game"
             
@@ -753,9 +754,52 @@ class PresenceManager(QObject):
                 proc = subprocess.Popen([str(exec_full_path)], cwd=str(exec_full_path.parent))
                 self.fake_proc = proc
                 self.fake_exec_path = exec_full_path
+                if game_name:
+                    self._rename_process_windows(proc.pid, game_name)
                 
         except Exception as e:
             logger.error(f"❌ Error creando/ejecutando ejecutable falso: {e}")
+
+    def _rename_process_windows(self, pid: int, title: str):
+        """
+        Busca las ventanas asociadas a un PID en Windows y cambia su título al del juego.
+        Se ejecuta en un hilo secundario y permanece activo mientras el proceso esté vivo,
+        renombrando cualquier ventana nueva o existente de dicho PID al título del juego.
+        """
+        if not IS_WINDOWS or not win32gui or not win32process:
+            return
+
+        def rename_thread():
+            logger.debug(f"🏷️ Buscando ventanas del proceso {pid} para renombrar a '{title}'...")
+            try:
+                proc = psutil.Process(pid)
+            except Exception:
+                return
+
+            while True:
+                try:
+                    # Verificar si el proceso sigue vivo
+                    if not proc.is_running() or proc.status() == psutil.STATUS_ZOMBIE:
+                        break
+                    
+                    hwnds = []
+                    win32gui.EnumWindows(lambda h, p: p.append(h), hwnds)
+                    
+                    for hwnd in hwnds:
+                        if win32gui.IsWindow(hwnd):
+                            _, win_pid = win32process.GetWindowThreadProcessId(hwnd)
+                            if win_pid == pid:
+                                current_text = win32gui.GetWindowText(hwnd)
+                                if current_text != title:
+                                    win32gui.SetWindowText(hwnd, title)
+                                    logger.info(f"🏷️ Título de ventana (HWND {hwnd}) para PID {pid} cambiado de '{current_text}' a '{title}'")
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    break
+                except Exception as e:
+                    logger.debug(f"Error al intentar cambiar el título de ventana para PID {pid}: {e}")
+                time.sleep(0.5)
+
+        threading.Thread(target=rename_thread, daemon=True).start()
 
     def _get_http_session(self):
         if self._http_session is None:
@@ -1547,7 +1591,7 @@ class PresenceManager(QObject):
                 logger.debug(f"🧹close_fake_executable desde update_presence (game_changed)")
                 self.close_fake_executable()
                 if current_game and current_game.get("executable_path"):
-                    self.launch_fake_executable(current_game["executable_path"])
+                    self.launch_fake_executable(current_game["executable_path"], current_game.get("name"))
                 
                 if current_game:
                     self.current_game_start_time = int(time.time())

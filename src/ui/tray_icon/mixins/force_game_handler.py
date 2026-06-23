@@ -217,7 +217,7 @@ class ForceGameHandlerMixin(Base):
                 self.pm.close_fake_executable()
             except Exception as e:
                 logger.debug(f"No se pudo cerrar ejecutable previo: {e}")
-            self.pm.launch_fake_executable(exe)
+            self.pm.launch_fake_executable(exe, name)
 
         self.pm.forced_game = {
             "name": name,

@@ -1,0 +1,9 @@
+HWND       | PID    | Process Name              | Window Title
+--------------------------------------------------------------------------------
+66736      | 1488   | Antigravity IDE.exe       | GeForce-NOW-Rich-Presence - Antigravity IDE - Implementation Plan
+132234     | 11212  | msedge.exe                | steamdb - Búsqueda y 2 páginas más - Personal: Microsoft​ Edge
+131774     | 10188  | Discord.exe               | Amigos - Discord
+131486     | 5204   | GeForceNOW.exe            | Forza Horizon 6 en GeForce NOW
+9962870    | 11204  | forzahorizon6.exe         | Dummy Game (Overredirect)
+66380      | 12472  | TextInputHost.exe         | Microsoft Text Input Application
+65940      | 9284   | explorer.exe              | Program Manager
