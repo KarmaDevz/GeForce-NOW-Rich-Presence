@@ -2,7 +2,7 @@ import os
 import logging
 import webbrowser
 # pyrefly: ignore [missing-import]
-from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QApplication
+from PyQt5.QtWidgets import QSystemTrayIcon, QMenu, QApplication, QAction
 # pyrefly: ignore [missing-import]
 from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor
 # pyrefly: ignore [missing-import]
@@ -91,7 +91,8 @@ class SystemTrayIcon(QSystemTrayIcon,
             self.updater.update_status_changed.connect(self.update_menu)
 
         self.create_menu()
-        self.setContextMenu(self.menu)
+        if IS_WINDOWS:
+            self.setContextMenu(self.menu)
         
         # Connect signals
         try:
@@ -133,13 +134,51 @@ class SystemTrayIcon(QSystemTrayIcon,
         discord_connected = self.pm.rpc is not None and getattr(self.pm, "_connected_client_id", None) is not None
         gfn_running = self.pm.is_geforce_running()
             
-        self.status_action = StatusWidgetAction(self.menu)
-        self.status_action.update_status(state, text, discord_connected, gfn_running)
-        self.menu.addAction(self.status_action)
+        if IS_WINDOWS:
+            self.status_action = StatusWidgetAction(self.menu)
+            self.status_action.update_status(state, text, discord_connected, gfn_running)
+            self.menu.addAction(self.status_action)
+        else:
+            # Standard menu items for Linux/macOS
+            status_text = f"Estado: {text}"
+            status_action = self.menu.addAction(status_text)
+            status_action.setEnabled(False)
+            
+            icon_map = {
+                "active": "status-check.svg",
+                "forced": "startup.svg",
+                "disconnected": "status-failed.svg"
+            }
+            icon_file = icon_map.get(state)
+            if icon_file:
+                path = ASSETS_DIR / "iconos" / icon_file
+                if path.exists():
+                    status_action.setIcon(QIcon(str(path)))
+            
+            disc_status = "Discord: " + (TEXTS.get("status_connected", "Conectado") if discord_connected else TEXTS.get("status_disconnected", "Desconectado"))
+            disc_action = self.menu.addAction(disc_status)
+            disc_action.setEnabled(False)
+            disc_icon = "status-check.svg" if discord_connected else "status-failed.svg"
+            path = ASSETS_DIR / "iconos" / disc_icon
+            if path.exists():
+                disc_action.setIcon(QIcon(str(path)))
+                
+            gfn_status = "GFN: " + ("En ejecución" if gfn_running else "No iniciado")
+            gfn_action = self.menu.addAction(gfn_status)
+            gfn_action.setEnabled(False)
+            gfn_icon = "status-check.svg" if gfn_running else "status-failed.svg"
+            path = ASSETS_DIR / "iconos" / gfn_icon
+            if path.exists():
+                gfn_action.setIcon(QIcon(str(path)))
+
         self.menu.addSeparator()
         
         # Block 1: QUICK ACTION
-        self.menu.addAction(SectionHeaderAction(TEXTS.get("tray_sec_quick_action", "Acción Rápida"), self.menu))
+        if IS_WINDOWS:
+            self.menu.addAction(SectionHeaderAction(TEXTS.get("tray_sec_quick_action", "Acción Rápida"), self.menu))
+        else:
+            header = self.menu.addAction(TEXTS.get("tray_sec_quick_action", "Acción Rápida").upper())
+            header.setEnabled(False)
         
         # 1.1 Force Game
         if IS_WINDOWS:
@@ -162,32 +201,63 @@ class SystemTrayIcon(QSystemTrayIcon,
         
         # 1.4 Get Steam cookie
         cookie_text = TEXTS.get("tray_get_cookie", "Obtener cookie de Steam")
-        cookie_action = CustomMenuItemAction(cookie_text, "steam-color.svg", parent=self.menu)
-        cookie_action.triggered.connect(self.obtain_cookie)
-        self.menu.addAction(cookie_action)
+        if IS_WINDOWS:
+            cookie_action = CustomMenuItemAction(cookie_text, "steam-color.svg", parent=self.menu)
+            cookie_action.triggered.connect(self.obtain_cookie)
+            self.menu.addAction(cookie_action)
+        else:
+            cookie_action = self.menu.addAction(cookie_text)
+            path = ASSETS_DIR / "iconos" / "steam-color.svg"
+            if path.exists():
+                cookie_action.setIcon(QIcon(str(path)))
+            cookie_action.triggered.connect(self.obtain_cookie)
         
         self.menu.addSeparator()
         
         # Block 2: CUSTOM PRESENCE (Only if game active)
         active_game = self.pm.forced_game or self.pm.last_game
         if active_game:
-            self.menu.addAction(SectionHeaderAction(TEXTS.get("tray_sec_custom_presence", "Presencia Personalizada"), self.menu))
+            if IS_WINDOWS:
+                self.menu.addAction(SectionHeaderAction(TEXTS.get("tray_sec_custom_presence", "Presencia Personalizada"), self.menu))
+            else:
+                header = self.menu.addAction(TEXTS.get("tray_sec_custom_presence", "Presencia Personalizada").upper())
+                header.setEnabled(False)
+            
             gname = active_game.get("name", "Unknown")
             if len(gname) > 20: gname = gname[:17] + "..."
             
             cp_text = f"Custom Presence: {gname}"
-            cp_action = CustomMenuItemAction(cp_text, "target.svg", "chevron-right.svg", parent=self.menu)
-            cp_action.triggered.connect(self.open_custom_presence_dialog)
-            self.menu.addAction(cp_action)
+            if IS_WINDOWS:
+                cp_action = CustomMenuItemAction(cp_text, "target.svg", "chevron-right.svg", parent=self.menu)
+                cp_action.triggered.connect(self.open_custom_presence_dialog)
+                self.menu.addAction(cp_action)
+            else:
+                cp_action = self.menu.addAction(cp_text)
+                path = ASSETS_DIR / "iconos" / "target.svg"
+                if path.exists():
+                    cp_action.setIcon(QIcon(str(path)))
+                cp_action.triggered.connect(self.open_custom_presence_dialog)
             self.menu.addSeparator()
             
         # Block 3: TOOLS
-        self.menu.addAction(SectionHeaderAction(TEXTS.get("tray_sec_tools", "Herramientas"), self.menu))
+        if IS_WINDOWS:
+            self.menu.addAction(SectionHeaderAction(TEXTS.get("tray_sec_tools", "Herramientas"), self.menu))
+        else:
+            header = self.menu.addAction(TEXTS.get("tray_sec_tools", "Herramientas").upper())
+            header.setEnabled(False)
         
         # 3.1 View logs
-        logs_action = CustomMenuItemAction(TEXTS.get("tray_tools_logs", "Ver logs"), "gear.svg", parent=self.menu)
-        logs_action.triggered.connect(self.open_logs)
-        self.menu.addAction(logs_action)
+        logs_text = TEXTS.get("tray_tools_logs", "Ver logs")
+        if IS_WINDOWS:
+            logs_action = CustomMenuItemAction(logs_text, "gear.svg", parent=self.menu)
+            logs_action.triggered.connect(self.open_logs)
+            self.menu.addAction(logs_action)
+        else:
+            logs_action = self.menu.addAction(logs_text)
+            path = ASSETS_DIR / "iconos" / "gear.svg"
+            if path.exists():
+                logs_action.setIcon(QIcon(str(path)))
+            logs_action.triggered.connect(self.open_logs)
 
         # 3.2 Verify integrity
         if IS_WINDOWS:
@@ -198,9 +268,16 @@ class SystemTrayIcon(QSystemTrayIcon,
 
         # 3.3 Join Discord
         invite_text = TEXTS.get("tray_discord_invite_gfn", "Entra al servidor de GeForce NOW")
-        invite_action = CustomMenuItemAction(invite_text, "discord.svg", parent=self.menu)
-        invite_action.triggered.connect(lambda: webbrowser.open("https://discord.gg/kHUvndZnw7"))
-        self.menu.addAction(invite_action)
+        if IS_WINDOWS:
+            invite_action = CustomMenuItemAction(invite_text, "discord.svg", parent=self.menu)
+            invite_action.triggered.connect(lambda: webbrowser.open("https://discord.gg/kHUvndZnw7"))
+            self.menu.addAction(invite_action)
+        else:
+            invite_action = self.menu.addAction(invite_text)
+            path = ASSETS_DIR / "iconos" / "discord.svg"
+            if path.exists():
+                invite_action.setIcon(QIcon(str(path)))
+            invite_action.triggered.connect(lambda: webbrowser.open("https://discord.gg/kHUvndZnw7"))
 
         # 3.4 Startup Preferences Submenu
         startup_menu = QMenu(TEXTS.get("tray_startup_options", "Preferencias de inicio"), self.menu)
@@ -274,33 +351,62 @@ class SystemTrayIcon(QSystemTrayIcon,
         # Block 4: Footer Actions
         # 4.1 Check updates
         update_text = TEXTS.get("tray_check_updates", "Buscar actualizaciones")
-        update_action = CustomMenuItemAction(update_text, "update.svg", parent=self.menu)
-        update_action.triggered.connect(self.manual_check_updates)
-        self.menu.addAction(update_action)
+        if IS_WINDOWS:
+            update_action = CustomMenuItemAction(update_text, "update.svg", parent=self.menu)
+            update_action.triggered.connect(self.manual_check_updates)
+            self.menu.addAction(update_action)
+        else:
+            update_action = self.menu.addAction(update_text)
+            path = ASSETS_DIR / "iconos" / "update.svg"
+            if path.exists():
+                update_action.setIcon(QIcon(str(path)))
+            update_action.triggered.connect(self.manual_check_updates)
         
         # 4.2 About
         about_text = TEXTS.get("tray_about", "Acerca de")
-        about_action = CustomMenuItemAction(about_text, "info.svg", parent=self.menu)
-        about_action.triggered.connect(self.open_about)
-        self.menu.addAction(about_action)
+        if IS_WINDOWS:
+            about_action = CustomMenuItemAction(about_text, "info.svg", parent=self.menu)
+            about_action.triggered.connect(self.open_about)
+            self.menu.addAction(about_action)
+        else:
+            about_action = self.menu.addAction(about_text)
+            path = ASSETS_DIR / "iconos" / "info.svg"
+            if path.exists():
+                about_action.setIcon(QIcon(str(path)))
+            about_action.triggered.connect(self.open_about)
         
         self.menu.addSeparator()
         
         # 4.3 Exit
         exit_text = TEXTS.get("tray_exit", "Salir")
-        exit_action = CustomMenuItemAction(exit_text, "can.svg", is_danger=True, parent=self.menu)
-        exit_action.triggered.connect(QApplication.instance().quit)
-        self.menu.addAction(exit_action)
-
+        if IS_WINDOWS:
+            exit_action = CustomMenuItemAction(exit_text, "can.svg", is_danger=True, parent=self.menu)
+            exit_action.triggered.connect(QApplication.instance().quit)
+            self.menu.addAction(exit_action)
+        else:
+            exit_action = self.menu.addAction(exit_text)
+            path = ASSETS_DIR / "iconos" / "can.svg"
+            if path.exists():
+                exit_action.setIcon(QIcon(str(path)))
+            exit_action.triggered.connect(QApplication.instance().quit)
+ 
         # 4.4 Version
-        version_action = VersionLabelAction(VERSION if VERSION.startswith("v") else f"{VERSION}", parent=self.menu)
-        self.menu.addAction(version_action)
+        version_text = VERSION if VERSION.startswith("v") else f"{VERSION}"
+        if IS_WINDOWS:
+            version_action = VersionLabelAction(version_text, parent=self.menu)
+            self.menu.addAction(version_action)
+        else:
+            version_action = self.menu.addAction(version_text)
+            version_action.setEnabled(False)
 
     def update_menu(self):
         self.create_menu()
 
     def on_activated(self, reason):
-        if reason == QSystemTrayIcon.DoubleClick:
+        if not IS_WINDOWS and reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.Context):
+            from PyQt5.QtGui import QCursor
+            self.menu.popup(QCursor.pos())
+        elif reason == QSystemTrayIcon.DoubleClick:
             from PyQt5.QtGui import QCursor
             self.menu.popup(QCursor.pos())
 
