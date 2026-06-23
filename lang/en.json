@@ -146,5 +146,18 @@
     "tray_tools_integrity": "Verify integrity",
     "tray_about": "About",
     "tray_discord_invite_gfn": "Join the GeForce NOW Server",
-    "tray_open_gfn": "Open GeForce NOW"
+    "tray_open_gfn": "Open GeForce NOW",
+    "tray_language": "Language",
+    "restart_confirm_title": "Change Language",
+    "restart_confirm_msg": "Do you want to change the language to {lang_name} and restart the application now?",
+    "about_desc_1": "GeForce NOW Rich Presence improves your Discord experience\nby showing what you are playing in real time",
+    "about_desc_2": "Made for the GeForce NOW and Discord community.",
+    "about_dev_by": "This project was developed with love by",
+    "about_support": "If you like this project, consider supporting its development.",
+    "about_btn_repo": "View repository",
+    "about_btn_server": "Join server",
+    "about_btn_support": "Support me",
+    "integrity_title": "Verify Integrity",
+    "verifying_gfn": "Verifying GeForce NOW integrity...",
+    "integrity_ok_msg": "All configuration files and GeForce NOW installation are in perfect condition."
 }

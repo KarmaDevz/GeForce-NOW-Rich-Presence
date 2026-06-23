@@ -1541,7 +1541,7 @@ class PresenceManager(QObject):
                     "name": "GeForce NOW",
                     "client_id": "1095416975028650046",
                     "image": "geforce",
-                    "custom_details": self.texts.get("lobby_status", "En el menú principal")
+                    "custom_details": self.texts.get("lobby_status", "En el menú principal"),
                 }
 
         # Check if game has actually changed using the resolved game dicts

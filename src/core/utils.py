@@ -107,6 +107,38 @@ def _normalize_lang(lang_str: str, default: str) -> str:
         return "en"
     return default
 
+def save_lang_to_registry(lang: str) -> bool:
+    # Map "es" -> "spanish", "ru" -> "russian", "en" -> "english"
+    lang_mapping = {
+        "es": "spanish",
+        "ru": "russian",
+        "en": "english"
+    }
+    reg_val = lang_mapping.get(lang, "english")
+    
+    registry_success = False
+    if IS_WINDOWS:
+        try:
+            import winreg
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\GeForcePresence")
+            winreg.SetValueEx(key, "lang", 0, winreg.REG_SZ, reg_val)
+            winreg.CloseKey(key)
+            registry_success = True
+            logger.info(f"Language saved to registry: {reg_val}")
+        except Exception as e:
+            logger.error(f"Error saving language to registry: {e}")
+            
+    env_success = False
+    try:
+        if ENV_PATH.exists():
+            set_key(str(ENV_PATH), "GEFORCE_LANG", lang)
+            env_success = True
+            logger.info(f"Language saved to .env: {lang}")
+    except Exception as e:
+        logger.error(f"Error saving language to .env: {e}")
+        
+    return registry_success or env_success
+
 def set_autostart_windows(enable: bool):
     if not IS_WINDOWS:
         return

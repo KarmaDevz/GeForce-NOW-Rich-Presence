@@ -12,7 +12,7 @@ from PyQt5.QtGui import QFontDatabase
 from src.core.utils import (
     BASE_DIR, CONFIG_DIR, LOGS_DIR, LANG_DIR, ASSETS_DIR, LOG_FILE, ENV_PATH,
     get_lang_from_registry, load_locale, ensure_env_file, acquire_lock, release_lock,
-    set_autostart_windows
+    set_autostart_windows, IS_WINDOWS
 )
 from src.core.config_manager import ConfigManager
 from src.core.cookie_manager import CookieManager
@@ -210,7 +210,7 @@ def main():
     updater = Updater(config_manager=config_manager)
     updater.check_for_updates(silent=True)
 
-    if config_manager.get_setting("start_with_windows", False):
+    if IS_WINDOWS and config_manager.get_setting("start_with_windows", False):
         try:
             # pyrefly: ignore [missing-import]
             import winshell
@@ -225,10 +225,10 @@ def main():
             logger.error(f"Error comprobando acceso directo de inicio de Windows: {e}")
 
     # 5.1 Launch Apps
-    if config_manager.get_setting("start_discord_on_launch", False):
+    if IS_WINDOWS and config_manager.get_setting("start_discord_on_launch", False):
         AppLauncher.launch_discord()
     
-    if config_manager.get_setting("start_gfn_on_launch", False):
+    if IS_WINDOWS and config_manager.get_setting("start_gfn_on_launch", False):
         AppLauncher.launch_geforce_now()
 
     # 5.2 Update Edge Driver

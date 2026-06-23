@@ -9,7 +9,7 @@ else:
 
 class UpdaterHandlerMixin(Base):
     def open_about(self):
-        dlg = AboutDialog()
+        dlg = AboutDialog(texts=getattr(self, "texts", None), parent=self.parent() if hasattr(self, "parent") else None)
         dlg.exec_()
 
     def manual_check_updates(self):

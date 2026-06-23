@@ -50,7 +50,7 @@ class IntegrityHandlerMixin(Base):
                 self.pm.games_map = data
                 logger.info("✅ games_config_merged.json restaurado y recargado con éxito.")
                 self.showMessage(
-                    "Integridad", 
+                    self.texts.get("integrity_title", "Verificar Integridad"), 
                     "Archivo de configuración restaurado de GitHub correctamente.", 
                     QSystemTrayIcon.Information, 
                     3000
@@ -64,21 +64,120 @@ class IntegrityHandlerMixin(Base):
                 )
                 return
         
-        # 2. Ask about GeForce NOW Repair
-        title = "Verificar Integridad"
-        msg = "Los archivos de configuración locales están correctos.\n\n¿Deseas verificar y reinstalar también GeForce NOW?"
-        if not config_ok:
-            msg = "El archivo de configuración local ha sido reparado.\n\n¿Deseas también verificar y reinstalar GeForce NOW?"
-
-        if GamingMessageBox.show_question(None, title, msg):
+        # 2. Validate GeForce NOW
+        # Show a progress/status dialog to let the user know we are verifying GeForce NOW
+        progress = QProgressDialog(
+            self.texts.get("verifying_gfn", "Verificando integridad de GeForce NOW..."), 
+            None, 
+            0, 
+            100, 
+            None
+        )
+        progress.setWindowTitle(self.texts.get("integrity_title", "Verificar Integridad"))
+        progress.setStyleSheet(GAMING_STYLESHEET)
+        progress.setWindowModality(Qt.ApplicationModal)
+        progress.setAutoClose(True)
+        progress.setValue(10)
+        QApplication.processEvents()
+        
+        # If GFN is not running, launch it to check if it corrupts on launch
+        from src.core.app_launcher import AppLauncher
+        import sys
+        import psutil
+        import subprocess
+        
+        target_proc = "GeForceNOW.exe" if sys.platform == "win32" else "GeForceNOW"
+        is_running = AppLauncher._is_process_running_by_name(target_proc)
+        if sys.platform == "darwin" and not is_running:
+            is_running = AppLauncher._is_process_running_by_name("GeForce NOW")
+            
+        if not is_running:
+            logger.info("Verificar Integridad: GeForce NOW no está ejecutándose. Iniciando para validar...")
+            AppLauncher.launch_geforce_now()
+            
+        # We will wait up to 8 seconds, checking visible window titles of the GFN process for corruption
+        corrupted = False
+        import time
+        start_time = time.time()
+        
+        # We loop and sleep, letting GUI update
+        while time.time() - start_time < 8.0:
+            # Update progress value gradually
+            val = int(10 + (time.time() - start_time) * 10)
+            progress.setValue(min(val, 95))
+            QApplication.processEvents()
+            
+            # Look for GFN processes
+            gef_pids = set()
+            try:
+                for proc in psutil.process_iter(['name', 'pid']):
+                    pname = (proc.info.get('name') or "").lower()
+                    if "geforcenow" in pname or "geforce now" in pname:
+                        gef_pids.add(proc.pid)
+            except Exception:
+                pass
+                
+            if gef_pids:
+                if sys.platform == "win32":
+                    import win32gui
+                    import win32process
+                    
+                    hwnds = []
+                    win32gui.EnumWindows(lambda h, p: p.append(h) if win32gui.IsWindowVisible(h) else None, hwnds)
+                    for hwnd in hwnds:
+                        try:
+                            _, pid = win32process.GetWindowThreadProcessId(hwnd)
+                            if pid in gef_pids:
+                                title = win32gui.GetWindowText(hwnd)
+                                if "Application Launch failed" in title or "Application resource corrupted" in title:
+                                    corrupted = True
+                                    logger.warning(f"Corrupción de GFN detectada en ventana: {title}")
+                                    break
+                        except Exception:
+                            continue
+                elif sys.platform == "darwin":
+                    cmd = """
+                    tell application "System Events"
+                        set geforceProcesses to every process whose name contains "GeForce"
+                        repeat with proc in geforceProcesses
+                            try
+                                set windowNames to name of every window of proc
+                                if count of windowNames > 0 then
+                                    return item 1 of windowNames
+                                end if
+                            end try
+                        end repeat
+                    end tell
+                    return ""
+                    """
+                    result = subprocess.run(["osascript", "-e", cmd], capture_output=True, text=True)
+                    if result.returncode == 0:
+                        title = result.stdout.strip()
+                        if "Application Launch failed" in title or "Application resource corrupted" in title:
+                            corrupted = True
+                            break
+                            
+            if corrupted:
+                break
+                
+            time.sleep(0.3)
+            
+        progress.close()
+        
+        # If GFN is corrupted, trigger repair!
+        if corrupted:
+            logger.warning("Verificar Integridad: GeForce NOW corrupto detectado. Iniciando reparación...")
             self.on_gfn_error_detected()
         else:
-            if config_ok:
-                GamingMessageBox.show_info(
-                    None, 
-                    "Verificar Integridad", 
-                    "Todos los archivos de configuración están en perfecto estado."
-                )
+            # Everything is OK!
+            logger.info("Verificar Integridad: GeForce NOW se inició sin corrupción.")
+            
+            # Show a success message
+            GamingMessageBox.show_info(
+                None, 
+                self.texts.get("integrity_title", "Verificar Integridad"), 
+                self.texts.get("integrity_ok_msg", "Todos los archivos de configuración e instalaciones están en perfecto estado.")
+            )
 
     def on_download_progress(self, current, total):
         if current == -1 and total == -1:

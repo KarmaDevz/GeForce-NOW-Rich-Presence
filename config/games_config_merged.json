@@ -65,16 +65,8 @@
         "shortName": "outlast_trials_egs",
         "appStore": "STEAM"
     },
-    "GeForce NOW": {
-        "name": "En la Biblioteca de Geforce Now",
-        "image": "lib",
-        "icon_key": "steam",
-        "state_text": "Buscando qué jugar",
-        "custom_details": "En el menú principal",
-        "custom_state": "Buscando juego",
-        "custom_party_size_current": 0,
-        "custom_party_size_max": 0
-    },
+    
+
     "SpeedRunners": {
         "name": "SpeedRunners",
         "steam_appid": 207140,

@@ -258,10 +258,22 @@ class SocialButton(QWidget):
 
 
 class AboutDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, texts=None, parent=None):
         load_about_fonts()
         super().__init__(parent)
-        self.setWindowTitle(TEXTS.get("about", "About"))
+        
+        # Load local translations dynamically on init
+        if texts is None:
+            try:
+                lang = get_lang_from_registry()
+                self.texts = load_locale(lang)
+            except Exception:
+                lang = os.getenv('GEFORCE_LANG', 'en')
+                self.texts = load_locale(lang)
+        else:
+            self.texts = texts
+            
+        self.setWindowTitle(self.texts.get("about", "About"))
         self.setWindowIcon(QIcon(str(ASSETS_DIR / "geforce.ico")))
         self.setFixedSize(680, 505)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
@@ -316,7 +328,7 @@ class AboutDialog(QDialog):
         layout.addLayout(logo_layout)
         
         # 4. Description Label
-        self.desc_label = QLabel("GeForce NOW Rich Presence mejora tu experiencia en Discord\nmostrando lo que juegas en tiempo real")
+        self.desc_label = QLabel(self.texts.get("about_desc_1", "GeForce NOW Rich Presence mejora tu experiencia en Discord\nmostrando lo que juegas en tiempo real"))
         self.desc_label.setAlignment(Qt.AlignCenter)
         self.desc_label.setStyleSheet("""
             color: #ffffff;
@@ -326,15 +338,15 @@ class AboutDialog(QDialog):
         """)
         layout.addWidget(self.desc_label)
 
-        self.desc_label = QLabel("Hecho para la comunidad de GeForce NOW y Discord.")
-        self.desc_label.setAlignment(Qt.AlignCenter)
-        self.desc_label.setStyleSheet("""
+        self.desc_label2 = QLabel(self.texts.get("about_desc_2", "Hecho para la comunidad de GeForce NOW y Discord."))
+        self.desc_label2.setAlignment(Qt.AlignCenter)
+        self.desc_label2.setStyleSheet("""
             color: #7A7A7A;
             font-size: 13px;
             font-family: "TT Octosquares Trl Cnd";
             background: transparent;
         """)
-        layout.addWidget(self.desc_label)
+        layout.addWidget(self.desc_label2)
         
         # 5. Dedication Card (QFrame)
         self.dedication_card = QFrame()
@@ -365,7 +377,7 @@ class AboutDialog(QDialog):
         dev_layout.setSpacing(4)
         dev_layout.setAlignment(Qt.AlignLeft)
         
-        dev_lbl = QLabel("Este proyecto fue desarrollado con cariño por")
+        dev_lbl = QLabel(self.texts.get("about_dev_by", "Este proyecto fue desarrollado con cariño por"))
         dev_lbl.setStyleSheet("""
             color: #ffffff;
             font-size: 13px;
@@ -389,7 +401,7 @@ class AboutDialog(QDialog):
         
         text_vbox.addLayout(dev_layout)
         
-        support_lbl = QLabel("Si te gusta este proyecto, considera apoyar su desarrollo.")
+        support_lbl = QLabel(self.texts.get("about_support", "Si te gusta este proyecto, considera apoyar su desarrollo."))
         support_lbl.setStyleSheet("""
             color: #8a8d90;
             font-size: 12px;
@@ -407,9 +419,9 @@ class AboutDialog(QDialog):
         social_layout.setAlignment(Qt.AlignCenter)
         social_layout.setSpacing(35)
         
-        btn_github = SocialButton("Ver repositorio", "github.svg", "https://github.com/KarmaDevz/GeForce-NOW-Rich-Presence", is_circular=False)
-        btn_discord = SocialButton("Entrar al servidor", "discord.svg", "https://discord.gg/kHUvndZnw7", is_circular=True, bg_color="#5865F2")
-        btn_paypal = SocialButton("Apóyame", "paypal.png", "https://www.paypal.com/paypalme/KarmaDevz", is_circular=True, bg_color="#0079C1")
+        btn_github = SocialButton(self.texts.get("about_btn_repo", "Ver repositorio"), "github.svg", "https://github.com/KarmaDevz/GeForce-NOW-Rich-Presence", is_circular=False)
+        btn_discord = SocialButton(self.texts.get("about_btn_server", "Entrar al servidor"), "discord.svg", "https://discord.gg/kHUvndZnw7", is_circular=True, bg_color="#5865F2")
+        btn_paypal = SocialButton(self.texts.get("about_btn_support", "Apóyame"), "paypal.png", "https://www.paypal.com/paypalme/KarmaDevz", is_circular=True, bg_color="#0079C1")
         
         social_layout.addWidget(btn_github)
         social_layout.addWidget(btn_discord)
