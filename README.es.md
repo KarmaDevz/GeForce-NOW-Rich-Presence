@@ -58,7 +58,7 @@ Accede a la configuración y características directamente desde el menú de la 
 | | 📊 **Sincronizar Juegos** | Descarga la base de datos más reciente de equivalencia de juegos desde la nube. |
 | | 👥 **Modo Misiones...** | Abre el panel de misiones para añadir, monitorear y cerrar simulaciones de misiones. |
 | **Credenciales**| 🔑 **Obtener Cookie de Steam** | Autentica y obtiene cookies locales para una integración más profunda con Steam. |
-| **Preferencias**| ⚙️ **Preferencias de Inicio** | Activa/Desactiva el inicio automático con el sistema operativo. |
+| **Preferencias**| ⚙️ **Preferencias** | Activa/Desactiva el inicio automático con el sistema operativo. |
 | | 📥 **Instalar Actualización** | Se muestra únicamente cuando hay una versión más reciente lista para descargar. |
 | **Sistema** | 📝 **Herramientas de diagnóstico** | Abre el visor de registros (logs) del programa. |
 | | ℹ️ **Acerca de** | Muestra la información de la aplicación y la versión que está corriendo actualmente. |

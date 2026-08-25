@@ -180,44 +180,55 @@ class IntegrityHandlerMixin(Base):
             )
 
     def on_download_progress(self, current, total):
-        if current == -1 and total == -1:
-            if getattr(self, '_download_progress_dlg', None):
-                self._download_progress_dlg.close()
-                self._download_progress_dlg.deleteLater()
-                self._download_progress_dlg = None
-            self._download_cancelled = False
-            return
+        try:
+            if current == -1 and total == -1:
+                dlg = getattr(self, '_download_progress_dlg', None)
+                if dlg:
+                    try:
+                        dlg.close()
+                        dlg.deleteLater()
+                    except Exception:
+                        pass
+                    self._download_progress_dlg = None
+                self._download_cancelled = False
+                return
 
-        if getattr(self, '_download_cancelled', False):
-            return
+            if getattr(self, '_download_cancelled', False):
+                return
 
-        if not getattr(self, '_download_progress_dlg', None):
-            self._download_progress_dlg = QProgressDialog("Descargando lista de juegos...", "Cancelar", 0, total if total > 0 else 0, None)
-            self._download_progress_dlg.setStyleSheet(GAMING_STYLESHEET)
-            self._download_progress_dlg.setWindowModality(Qt.WindowModal)
-            self._download_progress_dlg.setMinimumDuration(1500)
-            self._download_progress_dlg.setAutoReset(False)
-            self._download_progress_dlg.setAutoClose(False)
-            
-        if getattr(self, '_download_progress_dlg', None):
-            if total > 0:
-                self._download_progress_dlg.setMaximum(total)
-            self._download_progress_dlg.setValue(current)
-            
-            def fmt(sz):
-                if sz < 1024 * 1024:
-                    return f"{sz / 1024:.1f} KB"
-                return f"{sz / 1024 / 1024:.2f} MB"
+            if not getattr(self, '_download_progress_dlg', None):
+                cancel_text = getattr(self, 'texts', {}).get("cancel", "Cancelar")
+                self._download_progress_dlg = QProgressDialog("Descargando lista de juegos...", cancel_text, 0, total if total > 0 else 0, None)
+                self._download_progress_dlg.setStyleSheet(GAMING_STYLESHEET)
+                self._download_progress_dlg.setWindowModality(Qt.WindowModal)
+                self._download_progress_dlg.setMinimumDuration(1500)
+                self._download_progress_dlg.setAutoReset(False)
+                self._download_progress_dlg.setAutoClose(False)
                 
-            msg = f"Descargando lista de juegos... ({fmt(current)} / {fmt(total)})" if total > 0 else f"Descargando lista de juegos... ({fmt(current)})"
-            self._download_progress_dlg.setLabelText(msg)
-            QApplication.processEvents()
-            
-            if self._download_progress_dlg and self._download_progress_dlg.wasCanceled():
-                self._download_progress_dlg.close()
-                self._download_progress_dlg.deleteLater()
-                self._download_progress_dlg = None
-                self._download_cancelled = True
+            dlg = getattr(self, '_download_progress_dlg', None)
+            if dlg is not None:
+                if total > 0:
+                    dlg.setMaximum(total)
+                
+                def fmt(sz):
+                    if sz < 1024 * 1024:
+                        return f"{sz / 1024:.1f} KB"
+                    return f"{sz / 1024 / 1024:.2f} MB"
+                    
+                msg = f"Descargando lista de juegos... ({fmt(current)} / {fmt(total)})" if total > 0 else f"Descargando lista de juegos... ({fmt(current)})"
+                dlg.setLabelText(msg)
+                dlg.setValue(current)
+                
+                if getattr(self, '_download_progress_dlg', None) and self._download_progress_dlg.wasCanceled():
+                    try:
+                        self._download_progress_dlg.close()
+                        self._download_progress_dlg.deleteLater()
+                    except Exception:
+                        pass
+                    self._download_progress_dlg = None
+                    self._download_cancelled = True
+        except Exception as e:
+            logger.debug(f"Error in on_download_progress: {e}")
 
     def on_gfn_error_detected(self):
         if self._reinstaller_worker and self._reinstaller_worker.isRunning():

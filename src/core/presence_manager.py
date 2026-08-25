@@ -960,6 +960,56 @@ class PresenceManager(QObject):
 
 
 
+    ROMAN_NUMERALS = {
+        'i': 1, 'ii': 2, 'iii': 3, 'iv': 4, 'v': 5,
+        'vi': 6, 'vii': 7, 'viii': 8, 'ix': 9, 'x': 10,
+        'xi': 11, 'xii': 12, 'xiii': 13, 'xiv': 14, 'xv': 15, 'xvi': 16,
+        'xvii': 17, 'xviii': 18, 'xix': 19, 'xx': 20
+    }
+
+    def _extract_numbers_and_sequels(self, text: str) -> List[int]:
+        if not text:
+            return []
+        tokens = re.findall(r'\b[a-zA-Z0-9]+\b', text.lower())
+        nums = []
+        for i, t in enumerate(tokens):
+            if t.isdigit():
+                nums.append(int(t))
+            elif t in self.ROMAN_NUMERALS:
+                if t != 'i' or (len(tokens) > 1 and i == len(tokens) - 1):
+                    nums.append(self.ROMAN_NUMERALS[t])
+        return nums
+
+    def _calculate_string_similarity(self, s1: str, s2: str, is_rapidfuzz: bool = False) -> float:
+        if not s1 or not s2:
+            return 0.0
+        if is_rapidfuzz and fuzz and hasattr(fuzz, "ratio"):
+            base_score = fuzz.ratio(s1, s2) / 100.0
+        else:
+            import difflib as _difflib
+            base_score = _difflib.SequenceMatcher(None, s1, s2).ratio()
+
+        if s1 in s2:
+            base_score = max(base_score, 0.7 + 0.3 * (len(s1) / len(s2)))
+        elif s2 in s1:
+            base_score = max(base_score, 0.7 + 0.3 * (len(s2) / len(s1)))
+
+        # Penalización estricta por discrepancia de números/secuelas en el título
+        n1 = self._extract_numbers_and_sequels(s1)
+        n2 = self._extract_numbers_and_sequels(s2)
+
+        if n1 and n2:
+            if n1 != n2:
+                # Números explícitamente distintos (ej: MW4 vs MW2, Dark Souls III vs II)
+                base_score = min(base_score * 0.4, 0.45)
+        elif n1 or n2:
+            # Uno tiene número de secuela (>=2) y el otro no (ej: Portal 2 vs Portal)
+            active = n1 or n2
+            if any(n >= 2 for n in active):
+                base_score = min(base_score, 0.70)
+
+        return base_score
+
     def _cheap_prefilter(self, gnl, n_name, n_aliases):
         # fast substring check (cheap)
         if gnl in n_name or any(gnl in a for a in n_aliases):
@@ -985,81 +1035,38 @@ class PresenceManager(QObject):
 
         candidates = []
         gnl = cache_key
+        use_rapidfuzz = bool(fuzz and hasattr(fuzz, "ratio"))
 
         logger.debug("🔍 Buscando coincidencias con Discord (optimizado)...")
 
-        if fuzz and hasattr(fuzz, "ratio"):
-            # rapidfuzz path
-            for item in normalized_apps:
-                app = item["original"]
-                n_name = item["n_name"]
-                n_aliases = item["n_aliases"]
+        for item in normalized_apps:
+            app = item["original"]
+            n_name = item["n_name"]
+            n_aliases = item["n_aliases"]
 
-                # cheap prefilter
-                # cheap prefilter (safe: guard against missing attribute)
-                _prefilter = getattr(self, "_cheap_prefilter", None)
-                if _prefilter is not None:
-                    try:
-                        if not _prefilter(gnl, n_name, n_aliases):
-                            continue
-                    except Exception as _e:
-                        logger.debug(f"⚠️ _cheap_prefilter falló: {_e} — ignorando filtro barato y continuando.")
-                    # if _prefilter is None, we skip the cheap prefilter and let the fuzzy matching run
+            # cheap prefilter (safe: guard against missing attribute)
+            _prefilter = getattr(self, "_cheap_prefilter", None)
+            if _prefilter is not None:
+                try:
+                    if not _prefilter(gnl, n_name, n_aliases):
+                        continue
+                except Exception as _e:
+                    logger.debug(f"⚠️ _cheap_prefilter falló: {_e} — ignorando filtro barato y continuando.")
 
+            score_name = self._calculate_string_similarity(gnl, n_name, is_rapidfuzz=use_rapidfuzz)
 
-                score_name = fuzz.ratio(gnl, n_name) / 100.0
-                if gnl in n_name:
-                    score_name = max(score_name, 0.7 + 0.3 * (len(gnl) / len(n_name)))
-                
-                score_alias = 0.0
-                if n_aliases:
-                    best_alias_score = 0
-                    for alias in n_aliases:
-                        s = fuzz.ratio(gnl, alias) / 100.0
-                        if gnl in alias:
-                            s = max(s, 0.7 + 0.3 * (len(gnl) / len(alias)))
-                        if s > best_alias_score:
-                            best_alias_score = s
-                    score_alias = best_alias_score
+            score_alias = 0.0
+            if n_aliases:
+                best_alias_score = 0.0
+                for alias in n_aliases:
+                    s = self._calculate_string_similarity(gnl, alias, is_rapidfuzz=use_rapidfuzz)
+                    if s > best_alias_score:
+                        best_alias_score = s
+                score_alias = best_alias_score
 
-                score = max(score_name, score_alias)
-                if score > 0.35:
-                    self._add_candidate(candidates, app, score)
-
-        else:
-            # difflib fallback with cheap prefilter
-            import difflib as _difflib
-            for item in normalized_apps:
-                app = item["original"]
-                n_name = item["n_name"]
-                n_aliases = item["n_aliases"]
-
-                # cheap prefilter (safe: guard against missing attribute)
-                _prefilter = getattr(self, "_cheap_prefilter", None)
-                if _prefilter is not None:
-                    try:
-                        if not _prefilter(gnl, n_name, n_aliases):
-                            continue
-                    except Exception as _e:
-                        logger.debug(f"⚠️ _cheap_prefilter falló: {_e} — ignorando filtro barato y continuando.")
-                # if _prefilter is None, we skip the cheap prefilter and let the fuzzy matching run
-
-
-                score_name = _difflib.SequenceMatcher(None, gnl, n_name).ratio()
-                if gnl in n_name:
-                    score_name = max(score_name, 0.7 + 0.3 * (len(gnl) / len(n_name)))
-                    
-                score_alias = 0.0
-                for a in n_aliases:
-                    s = _difflib.SequenceMatcher(None, gnl, a).ratio()
-                    if gnl in a:
-                        s = max(s, 0.7 + 0.3 * (len(gnl) / len(a)))
-                    if s > score_alias:
-                        score_alias = s
-
-                score = max(score_name, score_alias)
-                if score > 0.35:
-                    self._add_candidate(candidates, app, score)
+            score = max(score_name, score_alias)
+            if score > 0.35:
+                self._add_candidate(candidates, app, score)
 
         candidates.sort(key=lambda x: x["score"], reverse=True)
         result = candidates[:max_candidates]

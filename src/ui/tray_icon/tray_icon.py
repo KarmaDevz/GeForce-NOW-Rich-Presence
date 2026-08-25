@@ -280,7 +280,7 @@ class SystemTrayIcon(QSystemTrayIcon,
             invite_action.triggered.connect(lambda: webbrowser.open("https://discord.gg/kHUvndZnw7"))
 
         # 3.4 Startup Preferences Submenu
-        startup_menu = QMenu(TEXTS.get("tray_startup_options", "Preferencias de inicio"), self.menu)
+        startup_menu = QMenu(TEXTS.get("tray_startup_options", "Preferencias"), self.menu)
         icon_pixmap = QPixmap(str(ASSETS_DIR / "iconos" / "startup.svg")).scaled(16, 16, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         startup_menu.setIcon(QIcon(icon_pixmap))
         startup_menu.setStyleSheet(self.menu.styleSheet())

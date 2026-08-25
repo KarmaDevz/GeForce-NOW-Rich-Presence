@@ -65,8 +65,6 @@
         "shortName": "outlast_trials_egs",
         "appStore": "STEAM"
     },
-    
-
     "SpeedRunners": {
         "name": "SpeedRunners",
         "steam_appid": 207140,
@@ -70967,5 +70965,12 @@
         "image": "steam",
         "client_id": "1445163122284429375",
         "executable_path": "forzahorizon6.exe"
+    },
+    "Call of Duty: Modern Warfare 4 - Beta": {
+        "name": "Call of Duty: Modern Warfare 4",
+        "steam_appid": "4783780",
+        "image": "steam",
+        "client_id": "1539812812854132867",
+        "executable_path": "sp26-cod.exe"
     }
 }

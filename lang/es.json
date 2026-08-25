@@ -118,7 +118,7 @@
     "startup_disabled_in_tm": "Deshabilitado en Administrador de tareas",
     "startup_re_enabled_msg": "Se ha vuelto a habilitar el inicio con Windows.",
     "tray_open_discord": "Abrir Discord",
-    "tray_startup_options": "Preferencias de inicio",
+    "tray_startup_options": "Preferencias",
     "tray_diagnostic_tools": "Herramientas de diagnóstico",
     "discord_not_found_msg": "Discord no se encuentra en la ruta por defecto.",
     "cookie_manual_title": "Introducción Manual de Cookie",
