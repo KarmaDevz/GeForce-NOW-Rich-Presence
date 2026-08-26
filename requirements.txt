@@ -1,10 +1,7 @@
 PyQt5
 psutil
 requests
-selenium
 pypresence
-beautifulsoup4
 python-dotenv
 pywin32; platform_system == "Windows"
 winshell; platform_system == "Windows"
-browser-cookie3

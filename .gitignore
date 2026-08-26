@@ -16,3 +16,4 @@ compile.txt
 config/*_backup.json
 config/app_settings.json
 instrucciones_release.txt
+test_steam*

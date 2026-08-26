@@ -6,7 +6,7 @@
     <strong>Muestra el juego que realmente estás jugando en Discord mientras usas GeForce NOW — automáticamente y con estilo.</strong>
   </p>
   
-  [🇺🇸 Read in English](./README.md) • [🇷🇺 На русском](./README.ru.md) • [📥 Descargar Última Versión](#-instalación) • [💬 Soporte](#-acerca-de-y-soporte)
+  [🇺🇸 Read in English](./README.md) • [🇷🇺 На русском](./README.ru.md) • [📖 Instrucciones Detalladas](./instrucciones.md) • [📥 Descargar Última Versión](#-instalación) • [💬 Soporte](#-acerca-de-y-soporte)
   
   <br/>
 
@@ -32,7 +32,7 @@ Por defecto, Discord solo muestra un estado genérico de **"Jugando a NVIDIA GeF
 
 - 🔍 **Detección Dinámica de Juegos**: Monitorea de forma automática el juego activo en GeForce NOW mediante el análisis de ventanas en ejecución.
 - 🎯 **Modo Misiones (Discord Quests)**: Agrega y simula múltiples instancias de juegos simultáneamente para completar misiones de Discord (cada simulación corre durante 16 minutos y 30 segundos antes de cerrarse de forma automática).
-- 🔑 **Gestor de Cookies de Steam**: Extrae de manera segura tu sesión de Steam local a través de Selenium y `browser-cookie3` para mostrar información enriquecida (salas de juego, número de jugadores y estados detallados).
+- 🔑 **Gestor de Cookies de Steam**: Integra tu sesión de Steam (`steamLoginSecure`) para mostrar información enriquecida (salas de juego, número de jugadores y estados detallados).
 - 🛠️ **Centro de Diagnóstico**: Visor de registros (logs) integrado con resaltado de sintaxis y cuadro de diálogo con reportador de fallos automático para copiar detalles del error al portapapeles al instante.
 - 🔄 **Actualizaciones Silenciosas Multiplataforma**: Actualizador en segundo plano integrado que detecta, descarga y extrae dinámicamente las actualizaciones para Windows, macOS y Linux sin bucles infinitos.
 - 🚀 **Inicio Automático**: Configura fácilmente el arranque con el sistema operativo directamente desde el menú de la bandeja.
@@ -57,7 +57,7 @@ Accede a la configuración y características directamente desde el menú de la 
 | **Acciones** | 🎮 **Forzar Juego...** | Sobrescribe manualmente la detección automática y elige qué juego mostrar. |
 | | 📊 **Sincronizar Juegos** | Descarga la base de datos más reciente de equivalencia de juegos desde la nube. |
 | | 👥 **Modo Misiones...** | Abre el panel de misiones para añadir, monitorear y cerrar simulaciones de misiones. |
-| **Credenciales**| 🔑 **Obtener Cookie de Steam** | Autentica y obtiene cookies locales para una integración más profunda con Steam. |
+| **Credenciales**| 🔑 **Configurar Cookie de Steam** | Permite ingresar y validar tu cookie de Steam para una integración más profunda. |
 | **Preferencias**| ⚙️ **Preferencias** | Activa/Desactiva el inicio automático con el sistema operativo. |
 | | 📥 **Instalar Actualización** | Se muestra únicamente cuando hay una versión más reciente lista para descargar. |
 | **Sistema** | 📝 **Herramientas de diagnóstico** | Abre el visor de registros (logs) del programa. |
@@ -72,7 +72,7 @@ Esta aplicación está construida con librerías modernas y eficientes de Python
 * **Entorno de Interfaz**: `PyQt5` para una interfaz de usuario oscura y moderna que encaja con la estética gamer.
 * **Integración con Discord**: `pypresence` para comunicación RPC de Discord de baja latencia.
 * **Monitoreo de Procesos**: `psutil` para vigilar GeForce NOW y cerrar procesos simulados residuales.
-* **Automatización**: `selenium` y `browser-cookie3` para extraer cookies de inicio de sesión de navegadores locales.
+* **Integración Web y APIs**: `requests` para sincronización en la nube y consulta a endpoints de Steam.
 * **Empaquetado**: `PyInstaller` para generar ejecutables autónomos ligeros y portables.
 * **Integración Continua (CI/CD)**: Compilaciones a través de matrices de `GitHub Actions` en runners de Windows, macOS y Linux.
 

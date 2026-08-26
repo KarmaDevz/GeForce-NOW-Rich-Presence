@@ -32,7 +32,7 @@ By default, Discord only displays a generic **"Playing NVIDIA GeForce NOW"** sta
 
 - 🔍 **Dynamic Game Detection**: Automatically tracks games running on GeForce NOW via active window parsing.
 - 🎯 **Quest Mode (Discord Quests)**: Simultaneously queue and simulate multiple game instances to complete Discord Quests (each simulation runs for 16 minutes and 30 seconds before auto-closing).
-- 🔑 **Steam Cookie Manager**: Safely extracts your local Steam session cookie via Selenium and `browser-cookie3` to fetch deep Steam lobby details, player counts, and rich game states.
+- 🔑 **Steam Cookie Manager**: Integrate your Steam session (`steamLoginSecure`) to fetch deep Steam lobby details, player counts, and rich game states.
 - 🛠️ **Diagnostics Hub**: Built-in, syntax-highlighted log viewer and an automatic crash reporter dialog to copy tracebacks instantly.
 - 🔄 **Multi-Platform Silent Updates**: Built-in silent background updater that detects, downloads, and extracts updates dynamically for Windows, macOS, and Linux without prompt loops.
 - 🚀 **Autostart Toggles**: Easily configure start-with-OS preferences directly from the system tray menu.
@@ -57,7 +57,7 @@ Access configuration and features directly from the system tray menu:
 | **Actions** | 🎮 **Force Game...** | Manually override detection and choose a specific game to display. |
 | | 📊 **Sync Games** | Fetch the latest game-matching mappings database from the cloud. |
 | | 👥 **Quest Mode...** | Open the Quest list panel to add, monitor, and clean up active quest game simulations. |
-| **Credentials**| 🔑 **Obtain Steam Cookie** | Authenticate and pull cookie information for deeper Steam integration. |
+| **Credentials**| 🔑 **Configure Steam Cookie** | Input and validate your Steam session cookie for deeper game integration. |
 | **Preferences**| ⚙️ **Autostart Preferences** | Toggle start-with-OS (Windows startup folder shortcut management). |
 | | 📥 **Install Update** | Displayed only when a new version is ready to download. |
 | **System** | 📝 **Herramientas de diagnóstico** | Access the live app logs viewer. |
@@ -72,7 +72,7 @@ This application is built with modern, efficient Python libraries:
 * **UI Framework**: `PyQt5` for a responsive, theme-matching dark gaming style desktop client.
 * **Discord Integration**: `pypresence` for low-latency Discord RPC communication.
 * **Process Tracking**: `psutil` to safely monitor GeForce NOW and clean up orphaned fake/simulation executables.
-* **Browser Automation**: `selenium` and `browser-cookie3` to scrape local browser data securely.
+* **Web APIs & Integration**: `requests` for cloud updates, sync, and Steam API validation.
 * **Packaging**: `PyInstaller` for creating portable, lightweight standalone application packages.
 * **CI/CD Build Pipeline**: `GitHub Actions` matrix builds to compile executables natively on Windows, macOS, and Linux runners.
 

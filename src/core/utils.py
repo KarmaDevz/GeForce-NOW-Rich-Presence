@@ -37,14 +37,6 @@ CONFIG_DIR = resource_path("config")
 LOGS_DIR = resource_path("logs")
 LANG_DIR = resource_path("lang")
 ASSETS_DIR = resource_path("assets")
-# Driver path depends on OS
-if IS_WINDOWS:
-    DRIVER_PATH = resource_path("tools", "msedgedriver.exe")
-elif IS_MACOS:
-    DRIVER_PATH = resource_path("tools", "msedgedriver_mac") 
-else:
-    DRIVER_PATH = resource_path("tools", "msedgedriver_linux")
-
 LOG_FILE = LOGS_DIR / "geforce_presence.log"
 ENV_PATH = resource_path(".env")
 DISCORD_CACHE_PATH = CONFIG_DIR / "discord_apps_cache.json"
@@ -244,24 +236,6 @@ STEAM_COOKIE=''
             logger.info(f"⚠️ No se pudo crear .env junto al exe; creado en: {alt}")
         return alt
     return path
-
-def ensure_driver_executable(src_path: Path) -> str:
-    try:
-        if not src_path.exists():
-            logger.warning(f"Driver no encontrado en recursos: {src_path}")
-            return str(src_path) 
-        tmpdir = Path(tempfile.gettempdir()) / "geforce_driver"
-        tmpdir.mkdir(parents=True, exist_ok=True)
-        dest = tmpdir / src_path.name
-        shutil.copy2(str(src_path), str(dest))
-        try:
-            dest.chmod(dest.stat().st_mode | stat.S_IEXEC)
-        except Exception:
-            pass
-        return str(dest)
-    except Exception as e:
-        logger.error(f"Error preparando driver: {e}")
-        return str(src_path)
 
 def acquire_lock() -> bool:
     if LOCK_FILE.exists():
