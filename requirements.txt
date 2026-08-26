@@ -3,5 +3,6 @@ psutil
 requests
 pypresence
 python-dotenv
+beautifulsoup4
 pywin32; platform_system == "Windows"
-winshell; platform_system == "Windows"
+winshell; platform_system == "Windows"

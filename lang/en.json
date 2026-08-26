@@ -77,6 +77,7 @@
     "ignore": "Ignore",
     "update_available_title": "Update Available",
     "new_version_found": "New version found:",
+    "new_build_found": "New build/hotfix found:",
     "release_notes": "Release Notes:",
     "update_now": "Update Now",
     "no_updates": "No Updates",

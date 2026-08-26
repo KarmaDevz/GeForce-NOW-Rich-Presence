@@ -77,6 +77,7 @@
     "ignore": "Ignorar",
     "update_available_title": "Actualización disponible",
     "new_version_found": "Nueva versión encontrada:",
+    "new_build_found": "Nueva compilación/corrección encontrada:",
     "release_notes": "Notas de la versión:",
     "update_now": "Actualizar ahora",
     "no_updates": "Sin actualizaciones",
