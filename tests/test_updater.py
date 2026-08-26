@@ -78,6 +78,22 @@ class TestUpdaterChecksumAndMetadata(unittest.TestCase):
         corrupt_path.write_text("{ this is invalid json !!!", encoding="utf-8")
         self.assertIsNone(get_installed_build(file_path=corrupt_path))
 
+    def test_get_installed_build_with_utf8_bom(self):
+        # Windows PowerShell Set-Content -Encoding UTF8 prepends a BOM (0xEF 0xBB 0xBF)
+        bom_path = self.test_dir / "installed_build_bom.json"
+        data = {
+            "version": "3.3.3",
+            "asset_name": "GeForceNOWRichPresence-Windows.zip",
+            "sha256": "sample_hash_123"
+        }
+        json_bytes = b'\xef\xbb\xbf' + json.dumps(data).encode("utf-8")
+        bom_path.write_bytes(json_bytes)
+
+        loaded = get_installed_build(file_path=bom_path)
+        self.assertIsNotNone(loaded)
+        self.assertEqual(loaded["version"], "3.3.3")
+        self.assertEqual(loaded["sha256"], "sample_hash_123")
+
     def test_newer_version_triggers_update(self):
         release_data = {
             "tag_name": "v3.4.0",

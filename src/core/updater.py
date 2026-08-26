@@ -220,7 +220,7 @@ def get_installed_build(file_path: Optional[Union[str, Path]] = None) -> Optiona
         if not path_obj.exists() or not path_obj.is_file():
             return None
             
-        with open(path_obj, "r", encoding="utf-8") as f:
+        with open(path_obj, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
             if isinstance(data, dict) and "version" in data:
                 return data
