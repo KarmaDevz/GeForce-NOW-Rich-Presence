@@ -7,7 +7,6 @@ AppName=GeForce Presence
 AppVersion={#AppVersion}
 AppPublisher=KarmaDevz
 AppPublisherURL=https://github.com/KarmaDevz
-AppUserModelId=KarmaDevz.GeForcePresence
 DefaultDirName={userappdata}\GeForceNOWRichPresence
 PrivilegesRequired=lowest
 DefaultGroupName=GeForce Presence
