@@ -2,7 +2,11 @@ import requests
 import logging
 import re
 from typing import Optional, Tuple
-from bs4 import BeautifulSoup
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
 
 logger = logging.getLogger('geforce_presence')
 
@@ -52,41 +56,59 @@ class SteamScraper:
                     logger.info("✅ Sesión de Steam restaurada.")
                     self._steam_expired_warned = False
 
-            soup = BeautifulSoup(resp.text, 'html.parser')
-            
-            # 1. Obtener el texto de Rich Presence
-            # Intentar primero con "Localized Rich Presence Result"
             rich_presence_text = None
-            b = soup.find('b', string=re.compile(r'Localized Rich Presence Result', re.IGNORECASE))
-            if b:
-                text = (b.next_sibling or "").strip()
-                if text and '#' not in text and "No rich presence keys set" not in text:
-                    rich_presence_text = text
+            group_size = None
 
-            # Si falla, intentar buscar "status" en la tabla (fallback mas robusto)
-            if not rich_presence_text:
-                rows = soup.find_all('tr')
-                for row in rows:
-                    cells = row.find_all('td')
-                    if len(cells) >= 2:
-                        key = cells[0].get_text().strip().lower()
-                        if key == 'status':
-                            val = cells[1].get_text().strip()
-                            if val and '#' not in val:
-                                rich_presence_text = val
-                                logger.debug(f"✅ Rich Presence encontrado via fallback 'status': {val}")
-                                break
+            if BeautifulSoup is not None:
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                
+                # 1. Obtener el texto de Rich Presence
+                # Intentar primero con "Localized Rich Presence Result"
+                b = soup.find('b', string=re.compile(r'Localized Rich Presence Result', re.IGNORECASE))
+                if b:
+                    text = (b.next_sibling or "").strip()
+                    if text and '#' not in text and "No rich presence keys set" not in text:
+                        rich_presence_text = text
 
+                # Si falla, intentar buscar "status" en la tabla (fallback mas robusto)
+                if not rich_presence_text:
+                    rows = soup.find_all('tr')
+                    for row in rows:
+                        cells = row.find_all('td')
+                        if len(cells) >= 2:
+                            key = cells[0].get_text().strip().lower()
+                            if key == 'status':
+                                val = cells[1].get_text().strip()
+                                if val and '#' not in val:
+                                    rich_presence_text = val
+                                    logger.debug(f"✅ Rich Presence encontrado via fallback 'status': {val}")
+                                    break
+                
+                # 2. Extraer steam_player_group_size
+                group_size = self._extract_group_size(soup)
+            else:
+                # Fallback con Regex si bs4 no está disponible
+                m = re.search(r'Localized Rich Presence Result.*?</b>\s*([^<\r\n]+)', resp.text, re.IGNORECASE)
+                if m:
+                    text = m.group(1).strip()
+                    if text and '#' not in text and "No rich presence keys set" not in text:
+                        rich_presence_text = text
+                if not rich_presence_text:
+                    m2 = re.search(r'<td[^>]*>\s*status\s*</td>\s*<td[^>]*>\s*([^<\r\n]+)\s*</td>', resp.text, re.IGNORECASE)
+                    if m2:
+                        rich_presence_text = m2.group(1).strip()
+                
+                m_grp = re.search(r'<td[^>]*>\s*steam_player_group_size\s*</td>\s*<td[^>]*>\s*(\d+)\s*</td>', resp.text, re.IGNORECASE)
+                if m_grp:
+                    try:
+                        group_size = int(m_grp.group(1))
+                    except ValueError:
+                        pass
+            
             if rich_presence_text:
                 if rich_presence_text != self._last_presence:
                     self._last_presence = rich_presence_text
                     logger.info(f"🎮 Rich Presence (nuevo): {rich_presence_text}")
-            else:
-                 # Si tras ambos intentos es nulo, registrar si hubo cambio (para no floodear)
-                 pass
-            
-            # 2. Extraer steam_player_group_size
-            group_size = self._extract_group_size(soup)
             
             return rich_presence_text, group_size
             

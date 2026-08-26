@@ -150,7 +150,29 @@ def main():
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--delay", type=int, default=0, help="Delay startup by N seconds")
+    parser.add_argument("--logs", action="store_true", help="Abrir directamente el visor de logs sin iniciar la presencia")
     args, unknown = parser.parse_known_args()
+    
+    # 0. Standalone Log Viewer Mode
+    if args.logs:
+        try:
+            lang = get_lang_from_registry()
+            texts = load_locale(lang)
+        except Exception:
+            lang = os.getenv('GEFORCE_LANG', 'en')
+            texts = load_locale(lang)
+
+        app = QApplication(sys.argv)
+        for ext in ["ttf", "otf"]:
+            p = ASSETS_DIR / f"font.{ext}"
+            if p.exists():
+                QFontDatabase.addApplicationFont(str(p))
+                break
+
+        from src.ui.dialogs import GamingLogViewerDialog
+        dlg = GamingLogViewerDialog(texts)
+        dlg.exec_()
+        sys.exit(0)
     
     if args.delay > 0:
         logger.info(f"Esperando {args.delay} segundos antes de iniciar...")
@@ -176,6 +198,14 @@ def main():
     except Exception:
         lang = os.getenv('GEFORCE_LANG', 'en')
         texts = load_locale(lang)
+
+    # Setup Windows JumpList
+    if IS_WINDOWS:
+        try:
+            from src.core.jumplist import setup_jumplist
+            setup_jumplist(texts)
+        except Exception as e:
+            logger.debug(f"No se pudo registrar JumpList: {e}")
 
     # 4. Initialize PyQt Application
     app = QApplication(sys.argv)
