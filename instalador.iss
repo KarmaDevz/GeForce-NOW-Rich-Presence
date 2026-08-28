@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "3.3.2"
+  #define AppVersion "3.3.3"
 #endif
 
 [Setup]
@@ -19,8 +19,8 @@ WizardStyle=modern
 SetupIconFile=_internal\assets\geforce.ico
 ; activa selector de idioma
 ShowLanguageDialog=yes
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 LicenseFile=LICENSE.txt
 AppSupportURL=https://github.com/KarmaDevz/GeForce-NOW-Rich-Presence/issues
 AppUpdatesURL=https://github.com/KarmaDevz/GeForce-NOW-Rich-Presence/releases

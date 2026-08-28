@@ -85,8 +85,14 @@ This application is built with modern, efficient Python libraries:
 2. Run the installer and launch the app. It will run in your system tray.
 
 ### macOS
-1. Download the `GeForceNOWRichPresence-macOS.zip` archive.
-2. Extract the folder and launch the executable.
+1. Download the `GeForceNOWRichPresence-macOS.zip` archive from the Releases page.
+2. Extract the folder.
+3. To bypass repetitive macOS Gatekeeper security prompts for Python components, open **Terminal** and run:
+   ```bash
+   xattr -cr /path/to/GeForceNOWRichPresence
+   ```
+   *(Or type `xattr -cr ` and drag the extracted folder into Terminal)*.
+4. Launch the `GeForceNOWRichPresence` executable.
 
 ### Linux
 1. Download the `GeForceNOWRichPresence-Linux.tar.gz` archive.

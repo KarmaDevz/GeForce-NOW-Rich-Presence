@@ -130,3 +130,12 @@ Si juegas a un título que acaba de añadirse a GeForce NOW y aún no está regi
 - **Discord no muestra el estado de actividad**: Asegúrate de tener Discord abierto y con la opción *"Mostrar la actividad actual como un mensaje de estado"* activada en la sección **Ajustes de usuario** $\rightarrow$ **Privacidad de la actividad** de Discord.
 - **¿Qué pasa si mi cookie expira?**: Las cookies de sesión de Steam suelen durar varias semanas o meses. Si cierras sesión manualmente en Steam desde tu navegador, la cookie caducará. Si esto sucede, simplemente repite el proceso de copia y vuelve a pegarla en la aplicación.
 - **Ver registros del sistema**: Puedes revisar el visor de registros en tiempo real haciendo clic derecho en el icono de la bandeja $\rightarrow$ **Herramientas de diagnóstico** $\rightarrow$ **Ver Registros**.
+- **En macOS aparecen múltiples avisos de seguridad / componentes bloqueados (Gatekeeper)**:
+  Al descargar la aplicación en macOS desde GitHub, el sistema operativo le asigna un atributo de cuarentena (`com.apple.quarantine`) a cada archivo y librería interna de Python. Para desbloquear todos los componentes de una sola vez sin tener que aceptar popups individuales:
+  1. Abre la **Terminal** en tu Mac.
+  2. Escribe `xattr -cr ` (dejando un espacio al final).
+  3. Arrastra y suelta la carpeta descomprimida `GeForceNOWRichPresence` dentro de la ventana de la Terminal (la ruta se completará automáticamente).
+  4. Presiona <kbd>Enter</kbd>.
+  5. *(Opcional)* Asegúrate de otorgar permisos de ejecución: `chmod +x /ruta/a/GeForceNOWRichPresence/GeForceNOWRichPresence`.
+  6. Ejecuta el programa con normalidad.
+
