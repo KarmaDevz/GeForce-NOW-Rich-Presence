@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "3.3.3"
+  #define AppVersion "3.3.4"
 #endif
 
 [Setup]
@@ -46,9 +46,9 @@ Source: "LICENCE_ru"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 ; Acceso directo en menú inicio
-Name: "{group}\GeForce Presence"; Filename: "{app}\GeForceNOWRichPresence.exe"; IconFilename: "{app}\_internal\assets\geforce.ico"
+Name: "{group}\GeForce Presence"; Filename: "{app}\GeForceNOWRichPresence.exe"; IconFilename: "{app}\_internal\assets\geforce.ico"; AppUserModelID: "KarmaDevz.GeForcePresence"
 ; Acceso directo en escritorio
-Name: "{userdesktop}\GeForce Presence"; Filename: "{app}\GeForceNOWRichPresence.exe"; IconFilename: "{app}\_internal\assets\geforce.ico"; Tasks: desktopicon
+Name: "{userdesktop}\GeForce Presence"; Filename: "{app}\GeForceNOWRichPresence.exe"; IconFilename: "{app}\_internal\assets\geforce.ico"; Tasks: desktopicon; AppUserModelID: "KarmaDevz.GeForcePresence"
 ; (Opcional) arranque con Windows
 ; Name: "{userstartup}\GeForce Presence"; Filename: "{app}\GeForceNOWRichPresence.exe"; WorkingDir: "{app}"
 

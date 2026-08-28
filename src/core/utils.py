@@ -290,7 +290,7 @@ def release_lock():
 
 def safe_json_load(path: Path) -> Optional[Dict]:
     try:
-        with path.open("r", encoding="utf-8") as f:
+        with path.open("r", encoding="utf-8-sig") as f:
             return json.load(f)
     except Exception as e:
         logger.error(f"Error cargando JSON {path}: {e}")

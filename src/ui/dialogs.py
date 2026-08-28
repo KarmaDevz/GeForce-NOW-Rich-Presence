@@ -535,6 +535,9 @@ class CrashReporterDialog(QDialog):
         
         self.copy_btn = QPushButton(self.texts.get("copy_error", "Copy Error"))
         self.copy_btn.clicked.connect(self.on_copy)
+
+        self.hotfix_btn = QPushButton(self.texts.get("check_hotfix", "Check for Fix / Update"))
+        self.hotfix_btn.clicked.connect(self.on_check_hotfix)
         
         self.export_btn = QPushButton(self.texts.get("export", "Export Logs"))
         self.export_btn.setObjectName("secondary")
@@ -544,6 +547,7 @@ class CrashReporterDialog(QDialog):
         self.close_btn.setObjectName("secondary")
         self.close_btn.clicked.connect(self.accept)
         
+        btn_layout.addWidget(self.hotfix_btn)
         btn_layout.addWidget(self.copy_btn)
         btn_layout.addWidget(self.export_btn)
         btn_layout.addStretch()
@@ -551,6 +555,14 @@ class CrashReporterDialog(QDialog):
         layout.addLayout(btn_layout)
         
         self.setLayout(layout)
+
+    def on_check_hotfix(self):
+        try:
+            from src.core.updater import Updater
+            updater = Updater(parent_widget=self)
+            updater.check_for_updates(silent=False)
+        except Exception as e:
+            logger.error(f"Error al comprobar hotfix desde crash reporter: {e}")
 
     def on_copy(self):
         from PyQt5.QtWidgets import QApplication

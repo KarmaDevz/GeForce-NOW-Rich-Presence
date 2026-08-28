@@ -127,6 +127,12 @@ jobs:
           find dist-artifacts/ -name "*.exe" -exec cp {} release-assets/ \;
           ls -R release-assets
 
+      - name: Generate Checksums (SHA-256)
+        run: |
+          cd release-assets
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
