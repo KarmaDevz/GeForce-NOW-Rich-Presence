@@ -1414,7 +1414,7 @@ class PresenceManager(QObject):
                     self.gfn_error_detected.emit()
                 return None
 
-            clean = re.sub(r'\s*(en|on|in|via)?\s*GeForce\s*NOW.*$', '', title, flags=re.IGNORECASE).strip()
+            clean = re.sub(r'\s*(en|on|in|via|sur)?\s*GeForce\s*NOW.*$', '', title, flags=re.IGNORECASE).strip()
             clean = re.sub(r'[®™]', '', clean).strip()
             
             last_clean = getattr(self, "_last_clean_title", None)
