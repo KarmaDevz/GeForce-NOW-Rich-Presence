@@ -70972,5 +70972,9 @@
         "image": "steam",
         "client_id": "1539812812854132867",
         "executable_path": "sp26-cod.exe"
+    },
+    "Onimusha: Way of the Sword": {
+        "executable_path": "onimushawots.exe",
+        "client_id": "1512292746889662576"
     }
 }

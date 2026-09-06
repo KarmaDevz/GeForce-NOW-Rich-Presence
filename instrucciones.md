@@ -14,6 +14,7 @@ Bienvenido a la guía completa de **GeForce NOW Rich Presence**. En este documen
      - [En Mozilla Firefox](#en-mozilla-firefox)
    - [Cómo ingresar la cookie en la aplicación](#cómo-ingresar-la-cookie-en-la-aplicación)
 3. [🎯 Modo Misiones (Discord Quests)](#-modo-misiones-discord-quests)
+   - [¿Qué hacer si un juego aparece con ❌ o no está listo para misiones?](#qué-hacer-si-un-juego-aparece-con--o-no-está-listo-para-misiones)
 4. [🎮 Forzar Juego Manualmente](#-forzar-juego-manualmente)
 5. [🛠️ Diagnóstico y Preguntas Frecuentes](#-diagnóstico-y-preguntas-frecuentes)
 
@@ -112,6 +113,14 @@ El **Modo Misiones** permite simular la ejecución de juegos específicos requer
 - Puedes buscar y seleccionar el juego objetivo en el catálogo de misiones de la aplicación.
 - Cada instancia simulada se mantendrá en ejecución durante **16 minutos y 30 segundos** (tiempo suficiente para cumplir con los requisitos habituales de 15 minutos en Discord).
 - Al finalizar el temporizador, el proceso simulado se cerrará automáticamente de forma limpia.
+
+### 🔄 ¿Qué hacer si un juego aparece con ❌ o no está listo para misiones?
+Para que una misión de Discord pueda completarse, Discord necesita reconocer el ejecutable oficial (`.exe`) del juego. Si un juego aparece con una **❌** en la columna **"Misiones de discord"** o no lo encuentras:
+
+1. Abre el cuadro de diálogo **🎮 Forzar Juego...** o la ventana del **Modo Misiones**.
+2. Haz clic en el botón **`Actualizar base de datos de juegos`**.
+3. El botón mostrará `Descargando...` con el progreso mientras descarga la lista más reciente directamente desde la API oficial de Discord (`v10`).
+4. Al completarse (`¡Base de datos actualizada!`), vuelve a buscar el juego; si Discord ya ha registrado sus ejecutables, aparecerá con **✅** y podrás seleccionarlo para completar tu misión.
 
 ---
 

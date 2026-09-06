@@ -160,5 +160,9 @@
     "about_btn_support": "Поддержать",
     "integrity_title": "Проверить целостность",
     "verifying_gfn": "Проверка целостности GeForce NOW...",
-    "integrity_ok_msg": "Все файлы конфигурации и установка GeForce NOW находятся в идеальном состоянии."
+    "integrity_ok_msg": "Все файлы конфигурации и установка GeForce NOW находятся в идеальном состоянии.",
+    "update_list": "Обновить базу данных игр",
+    "downloading": "Скачивание...",
+    "updated_success": "База данных обновлена!",
+    "update_error": "Ошибка при обновлении"
 }

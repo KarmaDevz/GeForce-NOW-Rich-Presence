@@ -47,12 +47,28 @@ class ForceGameHandlerMixin(Base):
             dlg.exec_()
             
         def on_update_list_opened():
-            self.showMessage("Info", "Actualizando lista de juegos de Discord...", QSystemTrayIcon.Information, 4000)
+            dialog.set_updating(True)
+            self.showMessage("Info", TEXTS.get("downloading", "Descargando lista de juegos de Discord..."), QSystemTrayIcon.Information, 4000)
             QApplication.processEvents()
-            apps = self.pm._fetch_discord_apps_cached(force_download=True)
+
+            def on_progress(cur, tot):
+                dialog.update_download_progress(cur, tot)
+                QApplication.processEvents()
+
+            self.pm.download_progress.connect(on_progress)
+            try:
+                apps = self.pm._fetch_discord_apps_cached(force_download=True)
+            finally:
+                try:
+                    self.pm.download_progress.disconnect(on_progress)
+                except Exception:
+                    pass
+
             if apps:
+                dialog.set_update_result(True, len(apps))
                 self.showMessage("Info", f"Lista de juegos actualizada exitosamente ({len(apps)} apps).", QSystemTrayIcon.Information, 3000)
             else:
+                dialog.set_update_result(False)
                 self.showMessage("Error", "No se pudo actualizar la lista de juegos de Discord.", QSystemTrayIcon.Warning, 4000)
 
         dialog.quest_mode_requested.connect(on_quest_opened)

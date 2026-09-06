@@ -1,7 +1,7 @@
 import os
 import time
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QLabel, QPushButton, QListWidget, 
-                             QHBoxLayout, QWidget, QProgressBar, QListWidgetItem)
+                             QHBoxLayout, QWidget, QProgressBar, QListWidgetItem, QApplication)
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon
 
@@ -68,6 +68,30 @@ class QuestListDialog(QDialog):
     def on_add_game(self):
         dlg = AskGameDialog(parent=self, message="Nombre del juego para Quest:")
         dlg.quest_mode_btn.hide() # Force quest mode if adding from here
+        
+        def on_update_list():
+            dlg.set_updating(True)
+            QApplication.processEvents()
+
+            def on_progress(cur, tot):
+                dlg.update_download_progress(cur, tot)
+                QApplication.processEvents()
+
+            self.pm.download_progress.connect(on_progress)
+            try:
+                apps = self.pm._fetch_discord_apps_cached(force_download=True)
+            finally:
+                try:
+                    self.pm.download_progress.disconnect(on_progress)
+                except Exception:
+                    pass
+
+            if apps:
+                dlg.set_update_result(True, len(apps))
+            else:
+                dlg.set_update_result(False)
+
+        dlg.update_list_requested.connect(on_update_list)
         
         if dlg.exec_() == QDialog.Accepted:
             game_name = dlg.get_game_name()

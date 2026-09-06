@@ -1,6 +1,6 @@
 import os
 from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QHBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QIcon
 
 from ..constants import ASSETS_DIR
@@ -21,6 +21,7 @@ class AskGameDialog(QDialog):
     def __init__(self, parent=None, title=TEXTS.get("force_game", "Force Game"),
                  message=TEXTS.get("game_name", "GAME NAME:")):
         super().__init__(parent)
+        self.texts = TEXTS
 
         self.setWindowTitle(title)
         self.setWindowIcon(QIcon(str(ASSETS_DIR / "geforce.ico")))
@@ -44,14 +45,15 @@ class AskGameDialog(QDialog):
         sec_btns_layout = QVBoxLayout()
         sec_btns_layout.setSpacing(10)
 
-        self.quest_mode_btn = QPushButton(TEXTS.get("quest_mode", "Misiones de Discord (Múltiples Juegos)"))
+        self.quest_mode_btn = QPushButton(self.texts.get("quest_mode", "Misiones de Discord (Múltiples Juegos)"))
         self.quest_mode_btn.setObjectName("secondary")
         self.quest_mode_btn.setAutoDefault(False)
         self.quest_mode_btn.clicked.connect(self.on_quest_mode_clicked)
         self.quest_mode_btn.setStyleSheet("padding: 10px; font-size: 13px;")
         sec_btns_layout.addWidget(self.quest_mode_btn)
 
-        self.update_list_btn = QPushButton(TEXTS.get("update_list", "Actualizar base de datos de juegos"))
+        self.orig_update_text = self.texts.get("update_list", "Actualizar base de datos de juegos")
+        self.update_list_btn = QPushButton(self.orig_update_text)
         self.update_list_btn.setObjectName("secondary")
         self.update_list_btn.setAutoDefault(False)
         self.update_list_btn.clicked.connect(self.on_update_list_clicked)
@@ -63,9 +65,9 @@ class AskGameDialog(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(12)
 
-        self.ok_btn = QPushButton(TEXTS.get("ok", "OK"))
+        self.ok_btn = QPushButton(self.texts.get("ok", "OK"))
         self.ok_btn.setDefault(True)
-        self.cancel_btn = QPushButton(TEXTS.get("cancel", "Cancel"))
+        self.cancel_btn = QPushButton(self.texts.get("cancel", "Cancel"))
         self.cancel_btn.setObjectName("secondary")
 
         self.ok_btn.clicked.connect(self.accept)
@@ -88,6 +90,38 @@ class AskGameDialog(QDialog):
 
     def on_update_list_clicked(self):
         self.update_list_requested.emit()
+
+    def set_updating(self, is_updating: bool):
+        if is_updating:
+            self.update_list_btn.setEnabled(False)
+            downloading_str = self.texts.get("downloading", "Descargando...")
+            self.update_list_btn.setText(f" {downloading_str}")
+        else:
+            self.update_list_btn.setEnabled(True)
+            self.update_list_btn.setText(self.orig_update_text)
+
+    def update_download_progress(self, current: int, total: int):
+        downloading_str = self.texts.get("downloading", "Descargando...")
+        if total > 0 and current > 0:
+            def fmt(sz):
+                if sz < 1024 * 1024:
+                    return f"{sz / 1024:.1f} KB"
+                return f"{sz / 1024 / 1024:.1f} MB"
+            self.update_list_btn.setText(f" {downloading_str} ({fmt(current)} / {fmt(total)})")
+        else:
+            self.update_list_btn.setText(f" {downloading_str}")
+
+    def set_update_result(self, success: bool, count: int = 0):
+        self.update_list_btn.setEnabled(True)
+        if success:
+            success_text = self.texts.get("updated_success", "¡Base de datos actualizada!")
+            msg = f"✅ {success_text} ({count} apps)" if count else f"✅ {success_text}"
+            self.update_list_btn.setText(msg)
+        else:
+            err_text = self.texts.get("update_error", "Error al actualizar")
+            self.update_list_btn.setText(f"❌ {err_text}")
+
+        QTimer.singleShot(4000, lambda: self.update_list_btn.setText(self.orig_update_text))
 
 
 class MatchSelectionDialog(QDialog):

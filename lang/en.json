@@ -160,5 +160,9 @@
     "about_btn_support": "Support me",
     "integrity_title": "Verify Integrity",
     "verifying_gfn": "Verifying GeForce NOW integrity...",
-    "integrity_ok_msg": "All configuration files and GeForce NOW installation are in perfect condition."
+    "integrity_ok_msg": "All configuration files and GeForce NOW installation are in perfect condition.",
+    "update_list": "Update games database",
+    "downloading": "Downloading...",
+    "updated_success": "Database updated!",
+    "update_error": "Error updating"
 }

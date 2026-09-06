@@ -388,7 +388,7 @@ class PresenceManager(QObject):
                         is_discord_not_running = "Could not find Discord" in err_str or "Discord installed and running" in err_str
                         
                         if is_discord_not_running and attempt < max_retries - 1:
-                            logger.info(f"⏳ Discord no parece estar listo aún. Reintentando conexión en {retry_delay}s... (Intento {attempt+1}/{max_retries})")
+                            logger.info(f"Discord no parece estar listo aún. Reintentando conexión en {retry_delay}s... (Intento {attempt+1}/{max_retries})")
                             time.sleep(retry_delay)
                         else:
                             raise e
