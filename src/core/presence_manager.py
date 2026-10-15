@@ -180,21 +180,22 @@ class PresenceManager(QObject):
 
     def check_discord_cache_status(self):
         if not DISCORD_CACHE_PATH.exists():
-            return {"status": "MISSING", "hours": 0}
+            return {"status": "MISSING", "hours": 0, "source": None}
         
         try:
             data = safe_json_load(DISCORD_CACHE_PATH)
             if not validate_discord_cache(data):
-                return {"status": "ERROR", "hours": 0}
+                return {"status": "ERROR", "hours": 0, "source": None}
             ts = data.get("_ts", 0)
+            source = data.get("source", "unknown")
             diff = time.time() - ts
             hours = diff / 3600
             if diff < DISCORD_CACHE_TTL:
-                return {"status": "FRESH", "hours": hours}
+                return {"status": "FRESH", "hours": hours, "source": source}
             else:
-                return {"status": "STALE", "hours": hours}
+                return {"status": "STALE", "hours": hours, "source": source}
         except:
-            return {"status": "ERROR", "hours": 0}
+            return {"status": "ERROR", "hours": 0, "source": None}
 
     def cancel_sync(self):
         self._cancel_sync_flag = True
@@ -834,13 +835,9 @@ class PresenceManager(QObject):
             download_success = False
             github_url = "https://raw.githubusercontent.com/KarmaDevz/GeForce-NOW-Rich-Presence/master/config/discord_apps_cache.json"
             
-            # Si se fuerza la descarga (solicitada manualmente por el usuario/desarrollador),
-            # le damos prioridad a Discord para obtener los datos más recientes de la API oficial.
-            # Si es una descarga automática en segundo plano (cache expirada), priorizamos GitHub para ahorrar rate-limit y velocidad.
-            if force_download:
-                sources = [("DISCORD API", DISCORD_DETECTABLE_URL), ("GITHUB", github_url)]
-            else:
-                sources = [("GITHUB", github_url), ("DISCORD API", DISCORD_DETECTABLE_URL)]
+            # Priorizamos SIEMPRE la API oficial de Discord para tener la lista de juegos más actualizada.
+            # GitHub queda como respaldo si la API de Discord no responde, da error o no hay conexión.
+            sources = [("DISCORD API", DISCORD_DETECTABLE_URL), ("GITHUB", github_url)]
 
             for source_name, url in sources:
                 try:
@@ -892,6 +889,8 @@ class PresenceManager(QObject):
                             save_json(to_save, DISCORD_CACHE_PATH)
                             save_json(to_save, backup_path)
                             self._last_apps_ts = to_save["_ts"]
+                            with self._match_cache_lock:
+                                self._match_cache.clear()
                             logger.info(f"✅ Caché de Discord actualizado desde {source_name} ({len(apps)} apps).")
                             break
                     else:
@@ -960,6 +959,8 @@ class PresenceManager(QObject):
                     })
                 self._cached_apps_normalized = norm
                 self._last_apps_ts = ts
+                with self._match_cache_lock:
+                    self._match_cache.clear()
         return self._cached_apps_normalized
 
 
@@ -1190,13 +1191,20 @@ class PresenceManager(QObject):
                     self._ongoing_match_jobs.add(game_key)
                     candidates = self._find_discord_matches(game_key, max_candidates=6)
                     
-                    if not candidates:
-                        # Si no hay candidatos, podría ser un juego muy nuevo no incluido en el caché de GitHub.
-                        # Verificamos si la caché actual vino de GitHub; si es así, forzamos la descarga desde la API
-                        # de Discord una sola vez (esto cambiará el origen a 'discord' en el JSON y evitará reintentos).
+                    # Si no hay candidatos o el mejor candidato no alcanza el umbral de auto-aplicación (0.85),
+                    # puede tratarse de un juego recién añadido a la API de Discord que aún no está en el caché local.
+                    best_score = candidates[0].get("score", 0) if candidates else 0
+                    if not candidates or best_score < DISCORD_AUTO_APPLY_THRESHOLD:
                         cache_data = safe_json_load(DISCORD_CACHE_PATH) or {}
-                        if cache_data.get("source", "github") == "github":
-                            logger.info(f"🔍 '{game_key}' no encontrado en el caché de GitHub. Buscando en la API oficial de Discord...")
+                        cache_source = cache_data.get("source", "github")
+                        cache_ts = cache_data.get("_ts", 0)
+                        now_ts = time.time()
+                        last_fetch = getattr(self, "_last_discord_live_fetch_ts", 0)
+                        
+                        # Si el caché no viene de Discord o tiene más de 6 horas, o no hemos consultado en 5 min
+                        if (cache_source != "discord" or (now_ts - cache_ts > 6 * 3600)) and (now_ts - last_fetch > 300):
+                            self._last_discord_live_fetch_ts = now_ts
+                            logger.info(f"🔍 '{game_key}' no tiene coincidencia segura en caché local (mejor: {best_score:.2f}). Buscando en la API oficial de Discord...")
                             apps = self._fetch_discord_apps_cached(force_download=True)
                             if apps:
                                 candidates = self._find_discord_matches(game_key, max_candidates=6)
