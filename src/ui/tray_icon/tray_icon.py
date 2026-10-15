@@ -8,7 +8,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QPainter, QColor
 # pyrefly: ignore [missing-import]
 from PyQt5.QtCore import Qt
 
-from src.core.utils import get_lang_from_registry, load_locale, LANG_DIR, IS_WINDOWS
+from src.core.utils import get_lang_from_registry, load_locale, LANG_DIR, IS_WINDOWS, IS_LINUX
 from src.version import VERSION
 from .constants import ASSETS_DIR
 from .widgets import StatusWidgetAction, CustomMenuItemAction, SectionHeaderAction, VersionLabelAction
@@ -91,7 +91,7 @@ class SystemTrayIcon(QSystemTrayIcon,
             self.updater.update_status_changed.connect(self.update_menu)
 
         self.create_menu()
-        if IS_WINDOWS:
+        if IS_WINDOWS or IS_LINUX:
             self.setContextMenu(self.menu)
         
         # Connect signals
@@ -131,8 +131,8 @@ class SystemTrayIcon(QSystemTrayIcon,
             state = "disconnected"
             text = TEXTS.get("status_disconnected", "Disconnected")
             
-        discord_connected = self.pm.rpc is not None and getattr(self.pm, "_connected_client_id", None) is not None
-        gfn_running = self.pm.is_geforce_running()
+        self._menu_key = self._menu_state_key()
+        discord_connected, gfn_running = self._menu_key[2:]
             
         if IS_WINDOWS:
             self.status_action = StatusWidgetAction(self.menu)
@@ -399,10 +399,24 @@ class SystemTrayIcon(QSystemTrayIcon,
             version_action = self.menu.addAction(version_text)
             version_action.setEnabled(False)
 
+    def _menu_state_key(self):
+        # Values shown in the menu; used to skip rebuilding it when nothing changed
+        forced = self.pm.forced_game
+        active = self.pm.last_game
+        return (
+            forced.get('name', 'Unknown') if forced else None,
+            active.get('name', 'Unknown') if active else None,
+            self.pm.rpc is not None and getattr(self.pm, "_connected_client_id", None) is not None,
+            self.pm.is_geforce_running(),
+        )
+
     def update_menu(self):
         self.create_menu()
 
     def on_activated(self, reason):
+        # On Linux the tray host shows the context menu itself (StatusNotifierItem)
+        if IS_LINUX:
+            return
         if not IS_WINDOWS and reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.Context):
             from PyQt5.QtGui import QCursor
             self.menu.popup(QCursor.pos())
@@ -448,6 +462,7 @@ class SystemTrayIcon(QSystemTrayIcon,
         current_lang = get_lang_from_registry()
         
         if lang_code == current_lang:
+            self.update_menu()
             return
             
         available_langs = self.get_available_languages()
@@ -461,6 +476,8 @@ class SystemTrayIcon(QSystemTrayIcon,
             from src.core.utils import save_lang_to_registry
             save_lang_to_registry(lang_code)
             self.restart_application()
+        else:
+            self.update_menu()
 
     def restart_application(self):
         import sys

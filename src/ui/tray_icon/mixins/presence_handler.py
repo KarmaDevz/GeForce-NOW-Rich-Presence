@@ -2,7 +2,7 @@ import os
 from typing import TYPE_CHECKING
 from PyQt5.QtWidgets import QSystemTrayIcon, QDialog
 
-from src.core.utils import get_lang_from_registry, load_locale
+from src.core.utils import get_lang_from_registry, load_locale, IS_LINUX
 from ..dialogs import CustomPresenceDialog, MatchSelectionDialog
 
 try:
@@ -39,7 +39,10 @@ class PresenceHandlerMixin(Base):
                 pass
 
     def on_menu_show(self):
-        self.update_menu()
+        # On Linux a rebuild gives every item a new DBusMenu ID and the tray host
+        # swaps the whole menu while it opens, so only rebuild when something changed
+        if not IS_LINUX or self._menu_state_key() != getattr(self, "_menu_key", None):
+            self.update_menu()
         if getattr(self, "status_action", None):
             self.status_action.start_animation()
 
