@@ -24,6 +24,7 @@ from pypresence import Presence
 from src.core.utils import safe_json_load, save_json, CONFIG_DIR, BASE_DIR, DISCORD_CACHE_PATH, DISCORD_DETECTABLE_URL, DISCORD_CACHE_TTL, DISCORD_AUTO_APPLY_THRESHOLD, DISCORD_ASK_TIMEOUT, IS_WINDOWS, IS_MACOS, IS_LINUX, validate_discord_cache, download_from_github
 from src.core.steam_scraper import SteamScraper, find_steam_appid_by_name
 from src.core.cookie_manager import CookieManager
+from src.core.gfn_log_watcher import GfnLogWatcher
 
 # Import win32 libs inside methods or here if safe
 if IS_WINDOWS:
@@ -82,7 +83,10 @@ class PresenceManager(QObject):
         self._is_connecting = False
         
         self.active_quests = {} # {game_id: {proc: Popen, start_time: ts, name: str, finished: bool}}
-        
+
+        # On Linux window titles aren't readable (Wayland), so we follow GFN's console.log
+        self._gfn_log_watcher = GfnLogWatcher() if IS_LINUX else None
+
         self.scraper = SteamScraper(self.cookie_manager.env_cookie, test_rich_url)
 
         self.last_game = None
@@ -1381,34 +1385,13 @@ class PresenceManager(QObject):
                                 logger.debug(f"Error leyendo logs para fallback en macOS: {log_err}")
 
             elif IS_LINUX:
-                # Linux logic using xprop (assumes X11 for now)
-                # We could also try /proc, but window title usually needs X11/Wayland tools
-                try:
-                    # Check if xprop is available
-                    # We are looking for a window with property _NET_WM_NAME or WM_NAME
-                    # and class name (WM_CLASS) related to GeForceNOW (if it exists)
-                    # For now, let's try a generic approach if the user is running it via browser/electron
-                    
-                    # Alternative: use standard 'w' tool or similar if available, but xprop is standard-ish for X11
-                    
-                    # We will try to find a window with "GeForce NOW" in title
-                    # cmd: xprop -root _NET_ACTIVE_WINDOW
-                    # then get title
-                    
-                    # Simple approach: Check all windows (requires tools)
-                    # Better: rely on process name first?
-                    # GFN on linux is likely Chrome/Edge.
-                    
-                    # NOTE: Since GFN is web-based on Linux usually, detection might be tricky without a dedicated app.
-                    # If this is for a dedicated Electron wrapper, we assume process name matches.
-                    
-                    pass 
-                except Exception:
-                    pass
-                
-                # Placeholder for Linux title detection
-                # If running via Browser, title might be "GeForce NOW - Google Chrome"
-                pass
+                # Window titles can't be read on Wayland, so we read the game being
+                # streamed from GFN's console.log (Launch game + streamer state machine).
+                # Only trust the log while GFN is running, so a crash doesn't leave a stale game.
+                if self.is_geforce_running():
+                    title = self._gfn_log_watcher.active_title()
+                else:
+                    self._gfn_log_watcher.reset()
             
             if not title:
                 self.log_once("⚠️ GeForce NOW no está abierto (o sin ventana activa)")
