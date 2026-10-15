@@ -1472,6 +1472,11 @@ class PresenceManager(QObject):
                 "steam_appid": appid,
                 "image": "steam"
             }
+            # GFN often adds edition suffixes ("— Remastered") to a game we already know.
+            # Reuse the Discord app of the known entry for the same Steam game.
+            known_client_id = self._find_client_id_by_appid(clean, appid)
+            if known_client_id:
+                new_game["client_id"] = known_client_id
             self.games_map[clean] = new_game
             config_path = CONFIG_DIR / "games_config_merged.json"
             games_config = safe_json_load(config_path) or {}
@@ -1483,14 +1488,15 @@ class PresenceManager(QObject):
             logger.info(f"🆕 Juego agregado a config: {clean} (AppID: {appid})")
             self.games_map = games_config
 
-            try:
-                threading.Thread(
-                    target=self._ensure_discord_match,
-                    args=(clean,),
-                    daemon=True
-                ).start()
-            except Exception as e:
-                logger.debug(f"no se pudo iniciar hilo de discord-match: {e}")
+            if not new_game.get("client_id"):
+                try:
+                    threading.Thread(
+                        target=self._ensure_discord_match,
+                        args=(clean,),
+                        daemon=True
+                    ).start()
+                except Exception as e:
+                    logger.debug(f"no se pudo iniciar hilo de discord-match: {e}")
             return new_game
 
         except Exception as e:
@@ -1498,6 +1504,23 @@ class PresenceManager(QObject):
                 self.log_once(f"⚠️ GeForce NOW está cerrado")
             else:
                 logger.error(f"⚠️ Error detectando juego activo: {e}")
+
+    def _find_client_id_by_appid(self, title: str, appid) -> Optional[str]:
+        """Returns the client_id of a known game with the same Steam AppID whose name is
+        contained in `title` (e.g. "The Witcher 3: Wild Hunt" in
+        "The Witcher 3: Wild Hunt — Remastered"). The name check guards against a wrong
+        AppID, since find_steam_appid_by_name falls back to the first search result."""
+        if not appid:
+            return None
+        n_title = title.lower()
+        for game_name, info in self.games_map.items():
+            if str(info.get("steam_appid") or "") != str(appid) or not info.get("client_id"):
+                continue
+            n_name = re.sub(r'[®™]', '', game_name).strip().lower()
+            if n_name and n_name in n_title:
+                logger.info(f"🔗 '{title}' usa el client_id de '{game_name}' (AppID {appid})")
+                return info["client_id"]
+        return None
 
     def log_once(self, msg, level="info"):
         if msg != self.last_log_message:
