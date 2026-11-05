@@ -105,10 +105,11 @@ class ForceGameHandlerMixin(Base):
         options.sort(key=lambda x: x.get("score", 0), reverse=True)
         options = options[:50]
 
-        if not options:
+        best_score = options[0].get("score", 0) if options else 0
+        if not options or best_score < 0.85:
             status = self.pm.check_discord_cache_status()
-            if status["status"] == "MISSING" or status["hours"] > 168:
-                self.showMessage("Buscando...", f"No encontrado en caché (antigua/faltante). Descargando datos recientes para '{game_name}'...", QSystemTrayIcon.Information, 4000)
+            if status["status"] in ("MISSING", "STALE") or status.get("source") != "discord" or status.get("hours", 0) > 24:
+                self.showMessage("Buscando...", f"Buscando datos actualizados en Discord para '{game_name}'...", QSystemTrayIcon.Information, 4000)
                 QApplication.processEvents() 
                 apps = self.pm._fetch_discord_apps_cached(force_download=True)
                 
@@ -169,11 +170,12 @@ class ForceGameHandlerMixin(Base):
         options.sort(key=lambda x: x.get("score", 0), reverse=True)
         options = options[:50]
 
-        # 2. If no matches, force download and search again
-        if not options:
+        # 2. If no matches or best match is low confidence, check Discord API
+        best_score = options[0].get("score", 0) if options else 0
+        if not options or best_score < 0.85:
             status = self.pm.check_discord_cache_status()
-            if status["status"] == "MISSING" or status["hours"] > 168:
-                self.showMessage("Buscando...", f"No encontrado en caché (antigua/faltante). Descargando datos recientes de Discord para '{game_name}'...", QSystemTrayIcon.Information, 4000)
+            if status["status"] in ("MISSING", "STALE") or status.get("source") != "discord" or status.get("hours", 0) > 24:
+                self.showMessage("Buscando...", f"Buscando datos actualizados en Discord para '{game_name}'...", QSystemTrayIcon.Information, 4000)
                 QApplication.processEvents() # Keep UI responsive (mostly)
                 
                 # Update cache
