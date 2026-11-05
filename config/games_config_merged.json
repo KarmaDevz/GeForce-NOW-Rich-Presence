@@ -63,7 +63,11 @@
         "cmsId": "102005811",
         "uuid": "941b7ef9-2151-4253-9547-dfe8d771b13d",
         "shortName": "outlast_trials_egs",
-        "appStore": "STEAM"
+        "appStore": "STEAM",
+        "custom_details": "",
+        "custom_state": "",
+        "custom_party_size_current": 0,
+        "custom_party_size_max": 4
     },
     "SpeedRunners": {
         "name": "SpeedRunners",
@@ -11917,7 +11921,7 @@
     },
     "MONSTER HUNTER RISE": {
         "name": "MONSTER HUNTER RISE",
-        "steam_appid": null,
+        "steam_appid": "1446780",
         "client_id": "1022248949865791588",
         "executable_path": "monsterhunterrise/monsterhunterrise.exe",
         "cmsId": "102292211",
@@ -13797,7 +13801,7 @@
     },
     "Warhammer 40,000: Darktide": {
         "name": "Warhammer 40,000: Darktide",
-        "steam_appid": null,
+        "steam_appid": "1361210",
         "client_id": "1124352228166217778",
         "executable_path": "binaries/darktide.exe",
         "cmsId": "100840611",
@@ -53023,7 +53027,7 @@
     },
     "Black Myth: Wukong": {
         "name": "Black Myth: Wukong",
-        "steam_appid": null,
+        "steam_appid": "2358720",
         "client_id": "1272842103910699040",
         "executable_path": "win64/b1-win64-shipping.exe",
         "cmsId": "102729911",
@@ -70964,7 +70968,11 @@
         "steam_appid": "2483190",
         "image": "steam",
         "client_id": "1445163122284429375",
-        "executable_path": "forzahorizon6.exe"
+        "executable_path": "forzahorizon6.exe",
+        "custom_details": "Explorando",
+        "custom_state": "",
+        "custom_party_size_current": 0,
+        "custom_party_size_max": 0
     },
     "Call of Duty: Modern Warfare 4 - Beta": {
         "name": "Call of Duty: Modern Warfare 4",
@@ -70976,5 +70984,19 @@
     "Onimusha: Way of the Sword": {
         "executable_path": "onimushawots.exe",
         "client_id": "1512292746889662576"
+    },
+    "ARKNIGHTS: ENDFIELD": {
+        "executable_path": "endfield.exe",
+        "client_id": "1461154307171811401"
+    },
+    "The Witcher 3: Wild Hunt — Remastered": {
+        "name": "The Witcher 3: Wild Hunt — Remastered",
+        "steam_appid": "292030",
+        "image": "steam",
+        "executable_path": "witcher3.exe",
+        "client_id": "359510249486417920"
+    },
+    "Call of Duty: Warzone": {
+        "client_id": "1500967742772215959"
     }
 }
